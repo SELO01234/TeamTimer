@@ -5,6 +5,8 @@ import com.example.application.holiday.repository.HolidayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class HolidayServiceImpl implements HolidayService{
 
@@ -17,6 +19,17 @@ public class HolidayServiceImpl implements HolidayService{
 
     @Override
     public void addHoliday(Holiday holiday) throws RuntimeException{
-        // TODO
+        //check if holiday exists
+        if(holidayRepository.existsByAllAttributes(holiday.getRegionCode(), holiday.getHolidayName(), holiday.getDate())){
+            throw new RuntimeException("Holiday is already saved");
+        }
+
+        //save holiday
+        holidayRepository.save(holiday);
+    }
+
+    @Override
+    public List<Holiday> getHolidays(String regionCode) throws RuntimeException {
+        return holidayRepository.findByRegionCode(regionCode).orElseThrow(()-> new RuntimeException("Could not retrieve holidays"));
     }
 }
