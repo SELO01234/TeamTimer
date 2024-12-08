@@ -1,6 +1,6 @@
 package com.example.application.holiday.service;
 
-import com.example.application.holiday.Entity.Holiday;
+import com.example.application.holiday.model.Holiday;
 
 import java.util.List;
 

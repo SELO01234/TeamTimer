@@ -36,7 +36,4 @@ public class Event {
 
     @Column(nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime endTime;
-
-    @Column(nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime createdAt;
 }

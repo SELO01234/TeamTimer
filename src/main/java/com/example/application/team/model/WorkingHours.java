@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 
 @Data
@@ -24,11 +25,11 @@ public class WorkingHours {
     @Column(name = "day_of_week", nullable = false)
     private DayOfWeek dayOfWeek;
 
-    @Column(nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime startTime;
+    @Column(nullable = false, columnDefinition = "TIME")
+    private LocalTime startTime;
 
-    @Column(nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime endTime;
+    @Column(nullable = false, columnDefinition = "TIME")
+    private LocalTime endTime;
 
     @ManyToOne
     @JoinColumn(name = "team_member_id")

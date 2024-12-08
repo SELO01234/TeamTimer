@@ -1,4 +1,4 @@
-package com.example.application.holiday.Entity;
+package com.example.application.holiday.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 
 @Data
 @Builder
@@ -21,7 +20,7 @@ public class Holiday {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Integer holidayId;
 
-    private String regionCode;
+    private String timezone;
 
     private String holidayName;
 

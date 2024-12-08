@@ -1,6 +1,6 @@
 package com.example.application.holiday.service;
 
-import com.example.application.holiday.Entity.Holiday;
+import com.example.application.holiday.model.Holiday;
 import com.example.application.holiday.repository.HolidayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,7 @@
 package com.example.application.team.controller;
 
 import com.example.application.team.dto.TeamMemberRegister;
+import com.example.application.team.dto.TeamMemberResponse;
 import com.example.application.team.model.Team;
 import com.example.application.team.model.TeamMember;
 import com.example.application.team.service.TeamService;
@@ -45,7 +46,13 @@ public class TeamController {
     }
 
     @GetMapping("/{teamId}/members")
-    public ResponseEntity<List<TeamMember>> getTeamMembers(@PathVariable("teamId") Integer teamId){
+    public ResponseEntity<List<TeamMemberResponse>> getTeamMembers(@PathVariable("teamId") Integer teamId){
         return ResponseEntity.ok().body(teamService.getTeamMembers(teamId));
+    }
+
+    @PutMapping("/{teamId}/members/{memberId}/leadership")
+    public ResponseEntity<String> assignTeamLeader(@PathVariable("teamId") Integer teamId, @PathVariable("memberId") Integer memberId){
+        teamService.assignTeamLeader(teamId, memberId);
+        return ResponseEntity.ok().body("Team leader role has assigned to the user");
     }
 }

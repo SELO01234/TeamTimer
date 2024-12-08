@@ -1,5 +1,6 @@
 package com.example.application.team.repository;
 
+import com.example.application.team.dto.TeamMemberResponse;
 import com.example.application.team.model.Team;
 import com.example.application.team.model.TeamMember;
 import com.example.application.user.model.User;
@@ -16,5 +17,9 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Integer>
 
     boolean existsByTeam(Team team);
 
-    Optional<List<TeamMember>> findAllByTeam(Team team);
+    @Query(value = "SELECT m.team_member_id, m.role_in_team, u.username, u.email, u.role, u.timezone, t.name AS team_name FROM team_member m " +
+            "JOIN _user u ON m.user_id = u.id " +
+            "JOIN team t ON t.id=m.team_id " +
+            "WHERE m.team_id=:team_id ;", nativeQuery = true)
+    List<Object[]> findAllByTeamId(@Param("team_id")Integer teamId);
 }

@@ -31,4 +31,6 @@ public class TimeOffRequest {
     private OffsetDateTime endDate;
 
     private String reason;
+
+    private boolean approved;
 }

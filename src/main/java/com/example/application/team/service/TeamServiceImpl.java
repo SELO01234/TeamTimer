@@ -1,15 +1,22 @@
 package com.example.application.team.service;
 
 import com.example.application.team.dto.TeamMemberRegister;
+import com.example.application.team.dto.TeamMemberResponse;
 import com.example.application.team.model.Team;
 import com.example.application.team.model.TeamMember;
+import com.example.application.team.model.TeamRole;
 import com.example.application.team.repository.TeamMemberRepository;
 import com.example.application.team.repository.TeamRepository;
+import com.example.application.user.model.Role;
 import com.example.application.user.model.User;
 import com.example.application.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -33,6 +40,7 @@ public class TeamServiceImpl implements TeamService{
     }
 
     @Override
+    @Transactional
     public void deleteTeam(Integer teamId) throws RuntimeException {
         // Check whether team is present or not
         if(teamRepository.findById(teamId).isEmpty()){
@@ -44,14 +52,11 @@ public class TeamServiceImpl implements TeamService{
     }
 
     @Override
+    @Transactional
     public Team updateTeam(Integer teamId, Team team) throws RuntimeException {
-        // Check whether team is present or not
-        if(teamRepository.findById(teamId).isEmpty()){
-            throw new RuntimeException("Team is not present");
-        }
 
         //get the present team
-        Team newTeam = teamRepository.findById(teamId).orElseThrow(()-> new RuntimeException("Could not implement update operation"));
+        Team newTeam = teamRepository.findById(teamId).orElseThrow(()-> new RuntimeException("Team is not present"));
         newTeam.setName(team.getName());
         newTeam.setDescription(team.getDescription());
 
@@ -64,19 +69,10 @@ public class TeamServiceImpl implements TeamService{
 
     @Override
     public void addTeamMember(Integer teamId, TeamMemberRegister teamMemberRegister) throws RuntimeException {
-        //check whether team exists
-        if(!teamRepository.existsById(teamId)){
-            throw new RuntimeException("Team is not present");
-        }
-
-        //check whether user exists
-        if(!userRepository.existsById(teamMemberRegister.getUserId())){
-            throw new RuntimeException("User is not present");
-        }
 
         //get user and team
-        Team team = teamRepository.findById(teamId).orElseThrow(RuntimeException::new);
-        User user = userRepository.findById(teamMemberRegister.getUserId()).orElseThrow(RuntimeException::new);
+        Team team = teamRepository.findById(teamId).orElseThrow(()-> new RuntimeException("Team is not present"));
+        User user = userRepository.findById(teamMemberRegister.getUserId()).orElseThrow(()-> new RuntimeException("User is not present"));
 
         //check if user is already in team or not
         if(teamMemberRepository.existsByUser(user) && teamMemberRepository.existsByTeam(team)){
@@ -95,16 +91,48 @@ public class TeamServiceImpl implements TeamService{
     }
 
     @Override
-    public List<TeamMember> getTeamMembers(Integer teamId) throws RuntimeException {
+    public List<TeamMemberResponse> getTeamMembers(Integer teamId) throws RuntimeException {
         //check whether team exists
         if(!teamRepository.existsById(teamId)){
             throw new RuntimeException("Team is not present");
         }
 
-        //get team
-        Team team = teamRepository.findById(teamId).orElseThrow(RuntimeException::new);
-
         //return members
-        return teamMemberRepository.findAllByTeam(team).orElseThrow(RuntimeException::new);
+        List<Object[]> results = teamMemberRepository.findAllByTeamId(teamId);
+        return results.stream().map(this::mapToTeamMemberResponse).toList();
+    }
+
+    @Override
+    public void assignTeamLeader(Integer teamId, Integer memberId) throws RuntimeException {
+        //check whether team exists
+        if(!teamRepository.existsById(teamId)){
+            throw new RuntimeException("Team is not present");
+        }
+
+        //check whether user exists
+        if(!teamMemberRepository.existsById(memberId)){
+            throw new RuntimeException("Team member is not present");
+        }
+
+        //get team member
+        TeamMember teamMember = teamMemberRepository.findById(memberId).orElseThrow(RuntimeException::new);
+
+        //assign leader role to the team member
+        teamMember.setRoleInTeam(TeamRole.LEADER);
+
+        //update the team member
+        teamMemberRepository.save(teamMember);
+    }
+
+    private TeamMemberResponse mapToTeamMemberResponse(Object[] result) {
+        return TeamMemberResponse.builder()
+                .teamMemberId((Integer) result[0])
+                .roleInTeam(TeamRole.valueOf((String) result[1]))
+                .username((String) result[2])
+                .email((String) result[3])
+                .role(Role.valueOf((String) result[4]))
+                .timezone(((Instant) result[5]).atOffset(ZoneOffset.UTC)) // Convert Instant to OffsetDateTime
+                .teamName((String) result[6])
+                .build();
     }
 }

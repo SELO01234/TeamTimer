@@ -1,6 +1,6 @@
 package com.example.application.holiday.controller;
 
-import com.example.application.holiday.Entity.Holiday;
+import com.example.application.holiday.model.Holiday;
 import com.example.application.holiday.service.HolidayService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

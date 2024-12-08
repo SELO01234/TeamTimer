@@ -26,8 +26,7 @@ public class User implements UserDetails {
     private Integer id;
     private String username;
     private String email;
-    @Column(nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime timezone;
+    private String timezone;
     private String password;
 
     @Enumerated(EnumType.STRING)

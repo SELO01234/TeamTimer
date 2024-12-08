@@ -1,13 +1,12 @@
 package com.example.application.holiday.repository;
 
-import com.example.application.holiday.Entity.Holiday;
+import com.example.application.holiday.model.Holiday;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 

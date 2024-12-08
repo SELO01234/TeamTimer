@@ -1,5 +1,6 @@
-package com.example.application.auth.dto;
+package com.example.application.team.dto;
 
+import com.example.application.team.model.TeamRole;
 import com.example.application.user.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,12 +11,15 @@ import java.time.OffsetDateTime;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class RegisterRequest {
+@AllArgsConstructor
+public class TeamMemberResponse {
+
+    private Integer teamMemberId;
+    private TeamRole roleInTeam;
     private String username;
     private String email;
-    private String password;
-    private String timezone;
     private Role role;
+    private OffsetDateTime timezone;
+    private String teamName;
 }

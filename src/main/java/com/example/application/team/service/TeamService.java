@@ -1,8 +1,8 @@
 package com.example.application.team.service;
 
 import com.example.application.team.dto.TeamMemberRegister;
+import com.example.application.team.dto.TeamMemberResponse;
 import com.example.application.team.model.Team;
-import com.example.application.team.model.TeamMember;
 
 import java.util.List;
 
@@ -16,5 +16,7 @@ public interface TeamService {
 
     void addTeamMember(Integer teamId, TeamMemberRegister teamMemberRegister);
 
-    List<TeamMember> getTeamMembers(Integer teamId);
+    List<TeamMemberResponse> getTeamMembers(Integer teamId);
+
+    void assignTeamLeader(Integer teamId, Integer memberId);
 }
