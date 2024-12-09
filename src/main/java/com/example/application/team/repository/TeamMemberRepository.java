@@ -1,6 +1,5 @@
 package com.example.application.team.repository;
 
-import com.example.application.team.dto.TeamMemberResponse;
 import com.example.application.team.model.Team;
 import com.example.application.team.model.TeamMember;
 import com.example.application.user.model.User;
@@ -22,4 +21,7 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Integer>
             "JOIN team t ON t.id=m.team_id " +
             "WHERE m.team_id=:team_id ;", nativeQuery = true)
     List<Object[]> findAllByTeamId(@Param("team_id")Integer teamId);
+
+    @Query(value = "SELECT u.timezone FROM team_member t JOIN _user u ON u.id=t.user_id WHERE t.team_id=:team_id AND t.team_member_id=:team_member_id", nativeQuery = true)
+    Optional<String> findTimezoneByTeamAndMemberId(@Param("team_id")Integer teamId,@Param("team_member_id") Integer memberId);
 }

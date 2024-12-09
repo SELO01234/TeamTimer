@@ -17,7 +17,7 @@ import java.time.LocalDate;
 public class Holiday {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer holidayId;
 
     private String timezone;

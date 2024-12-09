@@ -14,9 +14,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -131,7 +128,7 @@ public class TeamServiceImpl implements TeamService{
                 .username((String) result[2])
                 .email((String) result[3])
                 .role(Role.valueOf((String) result[4]))
-                .timezone(((Instant) result[5]).atOffset(ZoneOffset.UTC)) // Convert Instant to OffsetDateTime
+                .timezone(((String) result[5]))
                 .teamName((String) result[6])
                 .build();
     }

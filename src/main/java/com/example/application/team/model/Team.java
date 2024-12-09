@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class Team {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String name;
     private String description;
