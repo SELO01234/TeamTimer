@@ -18,7 +18,7 @@ import java.time.OffsetDateTime;
 public class Event {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer eventId;
 
     @ManyToOne(fetch = FetchType.LAZY)

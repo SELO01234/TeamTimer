@@ -20,7 +20,7 @@ public class HolidayServiceImpl implements HolidayService{
     @Override
     public void addHoliday(Holiday holiday) throws RuntimeException{
         //check if holiday exists
-        if(holidayRepository.existsByAllAttributes(holiday.getRegionCode(), holiday.getHolidayName(), holiday.getDate())){
+        if(holidayRepository.existsByAllAttributes(holiday.getTimezone(), holiday.getHolidayName(), holiday.getDate())){
             throw new RuntimeException("Holiday is already saved");
         }
 

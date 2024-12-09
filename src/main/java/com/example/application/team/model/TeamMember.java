@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class TeamMember {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer teamMemberId;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,6 +18,6 @@ public class TeamMemberResponse {
     private String username;
     private String email;
     private Role role;
-    private OffsetDateTime timezone;
+    private String timezone;
     private String teamName;
 }
