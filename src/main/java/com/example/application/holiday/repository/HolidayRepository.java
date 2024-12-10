@@ -13,9 +13,9 @@ import java.util.Optional;
 @Repository
 public interface HolidayRepository extends JpaRepository<Holiday, Integer> {
 
-    @Query(value = "SELECT EXISTS(SELECT * FROM holiday WHERE region_code=:region_code AND holiday_name=:holiday_name AND date=:date)", nativeQuery = true)
-    boolean existsByAllAttributes(@Param("region_code") String regionCode,@Param("holiday_name") String holidayName,@Param("date") LocalDate date);
+    @Query(value = "SELECT EXISTS(SELECT * FROM holiday WHERE timezone=:timezone AND holiday_name=:holiday_name AND date=:date)", nativeQuery = true)
+    boolean existsByAllAttributes(@Param("timezone") String timezone,@Param("holiday_name") String holidayName,@Param("date") LocalDate date);
 
-    @Query(value = "SELECT * FROM holiday WHERE region_code=:region_code", nativeQuery = true)
-    Optional<List<Holiday>> findByRegionCode(@Param("region_code") String regionCode);
+    @Query(value = "SELECT * FROM holiday WHERE timezone=:timezone", nativeQuery = true)
+    Optional<List<Holiday>> findByRegionCode(@Param("timezone") String timezone);
 }

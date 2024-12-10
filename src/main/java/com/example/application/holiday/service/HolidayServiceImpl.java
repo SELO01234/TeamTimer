@@ -29,7 +29,7 @@ public class HolidayServiceImpl implements HolidayService{
     }
 
     @Override
-    public List<Holiday> getHolidays(String regionCode) throws RuntimeException {
-        return holidayRepository.findByRegionCode(regionCode).orElseThrow(()-> new RuntimeException("Could not retrieve holidays"));
+    public List<Holiday> getHolidays(String timezone) throws RuntimeException {
+        return holidayRepository.findByRegionCode(timezone).orElseThrow(()-> new RuntimeException("Could not retrieve holidays"));
     }
 }

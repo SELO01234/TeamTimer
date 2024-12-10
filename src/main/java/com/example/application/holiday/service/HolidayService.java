@@ -8,5 +8,5 @@ public interface HolidayService {
 
     void addHoliday(Holiday holiday);
 
-    List<Holiday> getHolidays(String regionCode);
+    List<Holiday> getHolidays(String timezone);
 }

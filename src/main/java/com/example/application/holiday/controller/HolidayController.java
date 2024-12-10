@@ -23,8 +23,8 @@ public class HolidayController {
         return ResponseEntity.ok().body("Holiday has added");
     }
 
-    @GetMapping("/{regionCode}")
-    public ResponseEntity<List<Holiday>> getHolidays(@PathVariable("regionCode") String regionCode){
-        return ResponseEntity.ok().body(holidayService.getHolidays(regionCode));
+    @GetMapping()
+    public ResponseEntity<List<Holiday>> getHolidays(@RequestParam String timezone){
+        return ResponseEntity.ok().body(holidayService.getHolidays(timezone));
     }
 }
