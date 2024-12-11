@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Data
@@ -26,10 +28,10 @@ public class WorkingHours {
     private DayOfWeek dayOfWeek;
 
     @Column(nullable = false, columnDefinition = "TIME")
-    private LocalTime startTime;
+    private LocalDateTime startTime;
 
     @Column(nullable = false, columnDefinition = "TIME")
-    private LocalTime endTime;
+    private LocalDateTime endTime;
 
     @ManyToOne
     @JoinColumn(name = "team_member_id")
