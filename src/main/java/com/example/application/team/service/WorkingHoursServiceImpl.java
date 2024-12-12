@@ -1,9 +1,11 @@
 package com.example.application.team.service;
 
-import com.example.application.team.dto.WorkingHoursRequest;
+import com.example.application.team.dto.TeamMemberResponse;
+import com.example.application.team.dto.WorkingHoursDTO;
 import com.example.application.team.model.TeamMember;
 import com.example.application.team.model.WorkingHours;
 import com.example.application.team.repository.TeamMemberRepository;
+import com.example.application.team.repository.TeamRepository;
 import com.example.application.team.repository.WorkingHoursRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,16 +20,23 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
     private final WorkingHoursRepository workingHoursRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final TeamServiceImpl teamService;
+    private final TeamRepository teamRepository;
 
     @Autowired
-    public WorkingHoursServiceImpl(WorkingHoursRepository workingHoursRepository, TeamMemberRepository teamMemberRepository) {
+    public WorkingHoursServiceImpl(WorkingHoursRepository workingHoursRepository,
+                                   TeamMemberRepository teamMemberRepository,
+                                   TeamServiceImpl teamService,
+                                   TeamRepository teamRepository) {
         this.workingHoursRepository = workingHoursRepository;
         this.teamMemberRepository = teamMemberRepository;
+        this.teamService = teamService;
+        this.teamRepository = teamRepository;
     }
 
     @Transactional
     @Override
-    public void setDailyWorkingHours(Integer teamId, Integer memberId, List<WorkingHoursRequest> workingHoursRequest) throws RuntimeException {
+    public void setDailyWorkingHours(Integer teamId, Integer memberId, List<WorkingHoursDTO> workingHoursDTO) throws RuntimeException {
         //Get user's timezone from team member
         String timezone = teamMemberRepository.findTimezoneByTeamAndMemberId(teamId, memberId).orElseThrow(()-> new RuntimeException("User is not present"));
 
@@ -41,7 +50,7 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
         TeamMember teamMember = teamMemberRepository.findById(memberId).orElseThrow(()-> new RuntimeException("Team member is not present"));
 
         //process each working hour request
-        workingHoursRequest.forEach(request -> {
+        workingHoursDTO.forEach(request -> {
             //convert time to utc
             ZonedDateTime startDateZonedTime = ZonedDateTime.of(request.getStartTime(),zoneId);
             ZonedDateTime endDateZonedTime = ZonedDateTime.of(request.getEndTime(),zoneId);
@@ -64,22 +73,18 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
         });
     }
 
-    @Transactional
     @Override
-    public List<WorkingHoursRequest> getDailyWorkingHours(Integer teamId, Integer memberId) throws RuntimeException {
+    public List<WorkingHoursDTO> getDailyWorkingHours(Integer teamId, Integer memberId) throws RuntimeException {
 
         //Get Team Member
         TeamMember teamMember = teamMemberRepository.findById(memberId).orElseThrow(()-> new RuntimeException("Team member is not present"));
-        List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember);
+        List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember).orElseThrow(()-> new RuntimeException("Working Hours is not present"));
 
-        if(workingHours.isEmpty()){
-            return new ArrayList<>();
-        }
-        List<WorkingHoursRequest> workingHoursRequests = new ArrayList<>();
+        List<WorkingHoursDTO> workingHoursDTOS = new ArrayList<>();
         workingHours.forEach(workingHour -> {
             System.out.println(workingHour.getStartTime());
-            workingHoursRequests.add(
-                    WorkingHoursRequest
+            workingHoursDTOS.add(
+                    WorkingHoursDTO
                             .builder()
                             .dayOfWeek(workingHour.getDayOfWeek())
                             .startTime(workingHour.getStartTime())
@@ -87,15 +92,14 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
                             .build()
             );
         });
-        return workingHoursRequests;
+        return workingHoursDTOS;
     }
 
 
     //Returns daily working hours with specified timezone.
     //If timezone is not specified on path it returns as the team member's zone
-    @Transactional
     @Override
-    public List<WorkingHoursRequest> getDailyWorkingHoursZoned(Integer teamId, Integer memberId,String timezone) throws RuntimeException {
+    public List<WorkingHoursDTO> getDailyWorkingHoursZoned(Integer teamId, Integer memberId, String timezone) throws RuntimeException {
 
         //Get user's timezone from team member
         if(timezone == null)
@@ -112,13 +116,10 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
         //Get Team Member
         TeamMember teamMember = teamMemberRepository.findById(memberId).orElseThrow(()-> new RuntimeException("Team member is not present"));
-        List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember);
+        List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember).orElseThrow(()-> new RuntimeException("Working Hours is not present"));
 
-        if(workingHours.isEmpty()){
-            return new ArrayList<>();
-        }
 
-        List<WorkingHoursRequest> workingHoursRequests = new ArrayList<>();
+        List<WorkingHoursDTO> workingHoursDTOS = new ArrayList<>();
         workingHours.forEach(workingHour -> {
             ZonedDateTime startDateZonedTime = ZonedDateTime.of(workingHour.getStartTime(),ZoneOffset.UTC);
             ZonedDateTime endDateZonedTime = ZonedDateTime.of(workingHour.getEndTime(),ZoneOffset.UTC);
@@ -134,8 +135,8 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
             {
                 dayOfWeek = DayOfWeek.of((workingHour.getDayOfWeek().getValue() + 1) % 7);
             }
-            workingHoursRequests.add(
-                    WorkingHoursRequest
+            workingHoursDTOS.add(
+                    WorkingHoursDTO
                             .builder()
                             .dayOfWeek(dayOfWeek)
                             .startTime(startTime)
@@ -143,7 +144,22 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
                             .build()
             );
         });
-        return workingHoursRequests;
+        return workingHoursDTOS;
+    }
+
+    @Override
+    public List<WorkingHoursDTO> getCoreHours(Integer teamId) throws RuntimeException {
+        List<WorkingHoursDTO> workingHoursDTOS = new ArrayList<>();
+        List<TeamMemberResponse> teamMemberResponses = teamService.getTeamMembers(teamId);
+
+        teamMemberResponses.forEach(teamMemberResponse -> {
+            TeamMember teamMember = teamMemberRepository.findById(teamMemberResponse.getTeamMemberId()).orElseThrow(()-> new RuntimeException("Team member is not present"));
+            List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember).orElseThrow(()-> new RuntimeException("Working Hours is not present"));
+
+
+        });
+
+        return workingHoursDTOS;
     }
 
     @Transactional
@@ -152,7 +168,7 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
     public void deleteDailyWorkingHoursById(Integer teamId,Integer memberId,Integer workingHoursId) throws RuntimeException {
         TeamMember teamMember = teamMemberRepository.findById(memberId).orElseThrow(()-> new RuntimeException("Team member is not present"));
 
-        List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember);
+        List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember).orElseThrow(()-> new RuntimeException("Working Hours is not present"));
         boolean deleted = false;
         for(int i = 0; i < workingHours.size(); i++){
             WorkingHours workingHour = workingHours.get(i);

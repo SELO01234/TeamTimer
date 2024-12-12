@@ -18,8 +18,8 @@ import java.util.function.Function;
 public class JwtService {
 
     private static final String SECRET_KEY = "51655468576D597133743677397A24432646294A404E635266556A586E327234";
-    private static final Integer ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 5;
-    private static final Integer REFRESH_TOKEN_EXPIRATION = 1000 * 60 * 7;
+    private static final Integer ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 60 * 24;
+    private static final Integer REFRESH_TOKEN_EXPIRATION = 1000 * 60 * 60 * 31;
 
     private Claims extractAllClaims(String token){
         return Jwts

@@ -1,8 +1,7 @@
 package com.example.application.team.controller;
 
-import com.example.application.team.dto.WorkingHoursRequest;
+import com.example.application.team.dto.WorkingHoursDTO;
 import com.example.application.team.service.WorkingHoursService;
-import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,21 +22,21 @@ public class WorkingHoursController {
     @PutMapping("/{teamId}/members/{memberId}/working-hours")
     ResponseEntity<String> setDailyWorkingHours(@PathVariable("teamId") Integer teamId,
                                                 @PathVariable("memberId") Integer memberId,
-                                                @RequestBody List<WorkingHoursRequest> workingHoursRequests){
-        workingHoursService.setDailyWorkingHours(teamId, memberId, workingHoursRequests);
+                                                @RequestBody List<WorkingHoursDTO> workingHoursDTOS){
+        workingHoursService.setDailyWorkingHours(teamId, memberId, workingHoursDTOS);
         return ResponseEntity.ok("Working hours saved successfully!");
     }
 
     @GetMapping("/{teamId}/members/{memberId}/working-hours")
-    ResponseEntity<List<WorkingHoursRequest>> getDailyWorkingHours(@PathVariable("teamId") Integer teamId,
-                                                @PathVariable("memberId") Integer memberId){
+    ResponseEntity<List<WorkingHoursDTO>> getDailyWorkingHours(@PathVariable("teamId") Integer teamId,
+                                                               @PathVariable("memberId") Integer memberId){
         return ResponseEntity.ok().body(workingHoursService.getDailyWorkingHours(teamId,memberId));
     }
 
     @GetMapping("/{teamId}/members/{memberId}/working-hours-zoned")
-    ResponseEntity<List<WorkingHoursRequest>> getDailyWorkingHoursZoned(@PathVariable("teamId") Integer teamId,
-                                                                        @PathVariable("memberId") Integer memberId,
-                                                                        @RequestParam(required = false) String timezone){
+    ResponseEntity<List<WorkingHoursDTO>> getDailyWorkingHoursZoned(@PathVariable("teamId") Integer teamId,
+                                                                    @PathVariable("memberId") Integer memberId,
+                                                                    @RequestParam(required = false) String timezone){
         return ResponseEntity.ok().body(workingHoursService.getDailyWorkingHoursZoned(teamId,memberId,timezone));
     }
 
@@ -47,5 +46,10 @@ public class WorkingHoursController {
                                                   @PathVariable("workingHoursId") Integer workingHoursId){
         workingHoursService.deleteDailyWorkingHoursById(teamId, memberId, workingHoursId);
         return ResponseEntity.ok("Working hours deleted successfully!");
+    }
+
+    @GetMapping("/{teamId}/core-hours")
+    ResponseEntity<List<WorkingHoursDTO>> getCoreHours(@PathVariable("teamId") Integer teamId){
+        return ResponseEntity.ok().body(workingHoursService.getCoreHours(teamId));
     }
 }
