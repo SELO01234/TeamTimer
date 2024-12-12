@@ -27,10 +27,10 @@ public class WorkingHours {
     @Column(name = "day_of_week", nullable = false)
     private DayOfWeek dayOfWeek;
 
-    @Column(nullable = false, columnDefinition = "TIME")
+    @Column(nullable = false, columnDefinition = "TIMESTAMP")
     private LocalDateTime startTime;
 
-    @Column(nullable = false, columnDefinition = "TIME")
+    @Column(nullable = false, columnDefinition = "TIMESTAMP")
     private LocalDateTime endTime;
 
     @ManyToOne

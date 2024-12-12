@@ -125,12 +125,19 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
             LocalDateTime startTime = startDateZonedTime.withZoneSameInstant(zoneId).toLocalDateTime();
             LocalDateTime endTime = endDateZonedTime.withZoneSameInstant(zoneId).toLocalDateTime();
-
-
+            DayOfWeek dayOfWeek = workingHour.getDayOfWeek();
+            if(startTime.toLocalDate().isBefore(startDateZonedTime.toLocalDate()))
+            {
+                dayOfWeek = DayOfWeek.of((workingHour.getDayOfWeek().getValue() - 1) % 7);
+            }
+            else if (startTime.toLocalDate().isAfter(startDateZonedTime.toLocalDate()))
+            {
+                dayOfWeek = DayOfWeek.of((workingHour.getDayOfWeek().getValue() + 1) % 7);
+            }
             workingHoursRequests.add(
                     WorkingHoursRequest
                             .builder()
-                            .dayOfWeek(workingHour.getDayOfWeek())
+                            .dayOfWeek(dayOfWeek)
                             .startTime(startTime)
                             .endTime(endTime)
                             .build()
