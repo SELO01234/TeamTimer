@@ -101,16 +101,11 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
     @Override
     public List<WorkingHoursDTO> getDailyWorkingHoursZoned(Integer teamId, Integer memberId, String timezone) throws RuntimeException {
 
-        //Get user's timezone from team member
-        if(timezone == null)
-            timezone = teamMemberRepository.findTimezoneByTeamAndMemberId(teamId, memberId).orElseThrow(()-> new RuntimeException("User is not present"));
-        else
-        {
-            timezone = timezone.replace('_','/');
-        }
+        //check if timezone is assigned
         if(timezone == null){
-            throw new RuntimeException("Timezone is not set");
+            timezone = teamMemberRepository.findTimezoneByTeamAndMemberId(teamId, memberId).orElseThrow(()-> new RuntimeException("User is not present"));
         }
+
 
         ZoneId zoneId = ZoneId.of(timezone);
 
@@ -120,6 +115,7 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
 
         List<WorkingHoursDTO> workingHoursDTOS = new ArrayList<>();
+
         workingHours.forEach(workingHour -> {
             ZonedDateTime startDateZonedTime = ZonedDateTime.of(workingHour.getStartTime(),ZoneOffset.UTC);
             ZonedDateTime endDateZonedTime = ZonedDateTime.of(workingHour.getEndTime(),ZoneOffset.UTC);
