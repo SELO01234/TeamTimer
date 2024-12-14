@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -159,23 +160,24 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
             // Retrieve working hours for the given team and day
             List<WorkingHours> workingHourList = workingHoursRepository.getWorkingHoursByTeamIdAndDay(teamId, day.name());
 
+            if(teamMemberIds.isEmpty())
+                teamMemberIds = workingHoursRepository.getTeamMemberIds();
             // Process only if there are working hours
             if (!workingHourList.isEmpty()) {
 
-                boolean hasMoreThanOneUser=false;
-                int memberId = 0;
+                List<Integer> tempTeamMemberIds = new ArrayList<>();
                 // check whether that day has more than one user
                 for(WorkingHours workingHour : workingHourList){
-                    if(memberId == 0){
-                        memberId = workingHour.getTeamMember().getTeamMemberId();
-                    }
-                    else if(memberId != workingHour.getTeamMember().getTeamMemberId()){
-                        hasMoreThanOneUser=true;
-                        break;
+                    if(!tempTeamMemberIds.contains(workingHour.getTeamMember().getTeamMemberId()))
+                    {
+                        tempTeamMemberIds.add(workingHour.getTeamMember().getTeamMemberId());
                     }
                 }
+                Collections.sort(tempTeamMemberIds);
+                Collections.sort(tempTeamMemberIds);
+                boolean hasRequiredMembers = tempTeamMemberIds.containsAll(teamMemberIds);
 
-                if(hasMoreThanOneUser) {
+                if(hasRequiredMembers) {
                     //Refine the list for the specified team members
                     List<WorkingHours> refinedWorkingHourList = new ArrayList<>();
 

@@ -19,4 +19,7 @@ public interface WorkingHoursRepository extends JpaRepository<WorkingHours, Inte
             "ON w.team_member_id=tm.team_member_id WHERE tm.team_id=:team_id AND day_of_week=:day_of_week ORDER BY team_member_id",
             nativeQuery = true)
     List<WorkingHours> getWorkingHoursByTeamIdAndDay(@Param("team_id")Integer teamId, @Param("day_of_week")String dayOfWeek);
+
+    @Query(value = "SELECT DISTINCT team_member_id FROM working_hours", nativeQuery = true)
+    List<Integer> getTeamMemberIds();
 }
