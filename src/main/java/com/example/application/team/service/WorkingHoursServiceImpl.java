@@ -1,11 +1,13 @@
 package com.example.application.team.service;
 
-import com.example.application.team.dto.TeamMemberResponse;
+import com.example.application.team.calculationmodels.CalcEvent;
+import com.example.application.team.calculationmodels.CalcEventType;
+import com.example.application.team.dto.CoreHourResponse;
+import com.example.application.team.dto.TimeInterval;
 import com.example.application.team.dto.WorkingHoursDTO;
 import com.example.application.team.model.TeamMember;
 import com.example.application.team.model.WorkingHours;
 import com.example.application.team.repository.TeamMemberRepository;
-import com.example.application.team.repository.TeamRepository;
 import com.example.application.team.repository.WorkingHoursRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -20,18 +23,12 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
     private final WorkingHoursRepository workingHoursRepository;
     private final TeamMemberRepository teamMemberRepository;
-    private final TeamServiceImpl teamService;
-    private final TeamRepository teamRepository;
 
     @Autowired
     public WorkingHoursServiceImpl(WorkingHoursRepository workingHoursRepository,
-                                   TeamMemberRepository teamMemberRepository,
-                                   TeamServiceImpl teamService,
-                                   TeamRepository teamRepository) {
+                                   TeamMemberRepository teamMemberRepository) {
         this.workingHoursRepository = workingHoursRepository;
         this.teamMemberRepository = teamMemberRepository;
-        this.teamService = teamService;
-        this.teamRepository = teamRepository;
     }
 
     @Transactional
@@ -144,19 +141,69 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
     }
 
     @Override
-    public List<WorkingHoursDTO> getCoreHours(Integer teamId) throws RuntimeException {
-        List<WorkingHoursDTO> workingHoursDTOS = new ArrayList<>();
-        List<TeamMemberResponse> teamMemberResponses = teamService.getTeamMembers(teamId);
+    public List<CoreHourResponse> getCoreHours(Integer teamId) throws RuntimeException {
+        List<CoreHourResponse> coreHours = new ArrayList<>();
 
-        teamMemberResponses.forEach(teamMemberResponse -> {
-            TeamMember teamMember = teamMemberRepository.findById(teamMemberResponse.getTeamMemberId()).orElseThrow(()-> new RuntimeException("Team member is not present"));
-            List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember).orElseThrow(()-> new RuntimeException("Working Hours is not present"));
+        // Traverse over all days of the week
+        for (DayOfWeek day : DayOfWeek.values()) {
+            // Retrieve working hours for the given team and day
+            List<WorkingHours> workingHourList = workingHoursRepository.getWorkingHoursByTeamIdAndDay(teamId, day.name());
 
+            // Process only if there are working hours
+            if (!workingHourList.isEmpty()) {
+                List<TimeInterval> coreIntervals = findMaxOverlapIntervals(workingHourList);
 
-        });
+                // Add core intervals for the day
+                for (TimeInterval interval : coreIntervals) {
+                    coreHours.add(new CoreHourResponse(day, interval));
+                }
+            }
+        }
 
-        return workingHoursDTOS;
+        return coreHours;
     }
+
+    private List<TimeInterval> findMaxOverlapIntervals(List<WorkingHours> workingHours) {
+        List<CalcEvent> events = new ArrayList<>();
+
+        // Convert each interval to a pair of events (start and end)
+        for (WorkingHours wh : workingHours) {
+            events.add(new CalcEvent(wh.getStartTime(), CalcEventType.START));
+            events.add(new CalcEvent(wh.getEndTime(), CalcEventType.END));
+        }
+
+        // Sort events by time (start events come before end events if times are equal)
+        events.sort(Comparator.comparing(CalcEvent::getTime).thenComparing(CalcEvent::getType));
+
+        int activeCount = 0, maxCount = 0;
+        LocalDateTime currentStart = null;
+        List<TimeInterval> coreIntervals = new ArrayList<>();
+
+        // Sweep through events to find intervals with maximum overlap
+        for (CalcEvent event : events) {
+            if (event.getType() == CalcEventType.START) {
+                activeCount++;
+                if (activeCount > maxCount) {
+                    maxCount = activeCount;
+                    currentStart = event.getTime(); // Start of a new max interval
+                    coreIntervals.clear(); // Reset intervals, new maximum found
+                }
+
+                if (activeCount == maxCount && currentStart == null) {
+                    currentStart = event.getTime(); // Continue interval if already at max
+                }
+            } else {
+                if (activeCount == maxCount && currentStart != null) {
+                    coreIntervals.add(new TimeInterval(currentStart, event.getTime()));
+                    currentStart = null; // Reset current start
+                }
+                activeCount--;
+            }
+        }
+
+        return coreIntervals;
+    }
+
 
     @Transactional
     @Override

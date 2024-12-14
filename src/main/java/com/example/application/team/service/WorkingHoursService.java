@@ -1,5 +1,6 @@
 package com.example.application.team.service;
 
+import com.example.application.team.dto.CoreHourResponse;
 import com.example.application.team.dto.WorkingHoursDTO;
 
 import java.util.List;
@@ -11,5 +12,5 @@ public interface WorkingHoursService {
 
     List<WorkingHoursDTO> getDailyWorkingHours(Integer teamId, Integer memberId);
     List<WorkingHoursDTO> getDailyWorkingHoursZoned(Integer teamId, Integer memberId, String timezone);
-    List<WorkingHoursDTO> getCoreHours(Integer teamId);
+    List<CoreHourResponse> getCoreHours(Integer teamId);
 }
