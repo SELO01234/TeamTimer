@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -168,13 +167,12 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
                 List<Integer> tempTeamMemberIds = new ArrayList<>();
                 // check whether that day has more than one user
                 for(WorkingHours workingHour : workingHourList){
-                    if(!tempTeamMemberIds.contains(workingHour.getTeamMember().getTeamMemberId()))
+                    if(teamMemberIds.contains(workingHour.getTeamMember().getTeamMemberId()))
                     {
                         tempTeamMemberIds.add(workingHour.getTeamMember().getTeamMemberId());
                     }
                 }
-                Collections.sort(tempTeamMemberIds);
-                Collections.sort(tempTeamMemberIds);
+
                 boolean hasRequiredMembers = tempTeamMemberIds.containsAll(teamMemberIds);
 
                 if(hasRequiredMembers) {
@@ -191,7 +189,7 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
                         refinedWorkingHourList = workingHourList;
                     }
 
-                    List<TimeInterval> coreIntervals = findMaxOverlapIntervals(refinedWorkingHourList);
+                    List<TimeInterval> coreIntervals = findMaxOverlapIntervals(refinedWorkingHourList, teamMemberIds.size());
 
                     // Add core intervals for the day
                     for (TimeInterval interval : coreIntervals) {
@@ -223,7 +221,7 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
         }
     }
 
-    private List<TimeInterval> findMaxOverlapIntervals(List<WorkingHours> workingHours) {
+    private List<TimeInterval> findMaxOverlapIntervals(List<WorkingHours> workingHours, Integer numberOfTeamMembers) {
         List<CalcEvent> events = new ArrayList<>();
 
         // Convert each interval to a pair of events (start and end)
@@ -233,7 +231,11 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
         }
 
         // Sort events by time (start events come before end events if times are equal)
-        events.sort(Comparator.comparing(CalcEvent::getTime).thenComparing(CalcEvent::getType));
+        Comparator<CalcEvent> comparator = Comparator
+                .comparing((CalcEvent event) -> event.getTime().toLocalTime())
+                .thenComparing(CalcEvent::getType);
+
+        events.sort(comparator);
         System.out.println(events);
         int activeCount = 0, maxCount = 0;
         LocalDateTime currentStart = null;
@@ -253,7 +255,7 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
                     currentStart = event.getTime(); // Continue interval if already at max
                 }
             } else {
-                if (activeCount == maxCount && currentStart != null) {
+                if (activeCount == maxCount && maxCount>=numberOfTeamMembers && currentStart != null) {
                     coreIntervals.add(new TimeInterval(currentStart, event.getTime()));
                     currentStart = null; // Reset current start
                 }

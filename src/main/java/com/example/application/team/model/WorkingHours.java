@@ -1,10 +1,7 @@
 package com.example.application.team.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
@@ -33,5 +30,6 @@ public class WorkingHours {
 
     @ManyToOne
     @JoinColumn(name = "team_member_id")
+    @ToString.Exclude
     private TeamMember teamMember;
 }

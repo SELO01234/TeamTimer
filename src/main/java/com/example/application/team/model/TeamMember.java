@@ -2,10 +2,7 @@ package com.example.application.team.model;
 
 import com.example.application.user.model.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
@@ -33,5 +30,6 @@ public class TeamMember {
     private TeamRole roleInTeam;
 
     @OneToMany(mappedBy = "teamMember", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<WorkingHours> workingHours;
 }
