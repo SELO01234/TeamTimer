@@ -2,13 +2,13 @@ package com.example.application.team.service;
 
 import com.example.application.team.calculationmodels.CalcEvent;
 import com.example.application.team.calculationmodels.CalcEventType;
-import com.example.application.team.dto.CoreHourResponse;
 import com.example.application.team.dto.TimeInterval;
 import com.example.application.team.dto.WorkingHoursDTO;
 import com.example.application.team.model.TeamMember;
 import com.example.application.team.model.WorkingHours;
 import com.example.application.team.repository.TeamMemberRepository;
 import com.example.application.team.repository.WorkingHoursRepository;
+import com.example.application.util.TimeConverter;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -103,9 +103,6 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
             timezone = teamMemberRepository.findTimezoneByTeamAndMemberId(teamId, memberId).orElseThrow(()-> new RuntimeException("User is not present"));
         }
 
-
-        ZoneId zoneId = ZoneId.of(timezone);
-
         //Get Team Member
         TeamMember teamMember = teamMemberRepository.findById(memberId).orElseThrow(()-> new RuntimeException("Team member is not present"));
         List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember).orElseThrow(()-> new RuntimeException("Working Hours is not present"));
@@ -113,36 +110,18 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
         List<WorkingHoursDTO> workingHoursDTOS = new ArrayList<>();
 
+        String finalTimezone = timezone;
         workingHours.forEach(workingHour -> {
-            ZonedDateTime startDateZonedTime = ZonedDateTime.of(workingHour.getStartTime(),ZoneOffset.UTC);
-            ZonedDateTime endDateZonedTime = ZonedDateTime.of(workingHour.getEndTime(),ZoneOffset.UTC);
-
-            LocalDateTime startTime = startDateZonedTime.withZoneSameInstant(zoneId).toLocalDateTime();
-            LocalDateTime endTime = endDateZonedTime.withZoneSameInstant(zoneId).toLocalDateTime();
-            DayOfWeek dayOfWeek = workingHour.getDayOfWeek();
-            if(startTime.toLocalDate().isBefore(startDateZonedTime.toLocalDate()))
-            {
-                dayOfWeek = DayOfWeek.of((workingHour.getDayOfWeek().getValue() - 1) % 7);
-            }
-            else if (startTime.toLocalDate().isAfter(startDateZonedTime.toLocalDate()))
-            {
-                dayOfWeek = DayOfWeek.of((workingHour.getDayOfWeek().getValue() + 1) % 7);
-            }
             workingHoursDTOS.add(
-                    WorkingHoursDTO
-                            .builder()
-                            .dayOfWeek(dayOfWeek)
-                            .startTime(startTime)
-                            .endTime(endTime)
-                            .build()
+                    TimeConverter.convertTimeToZonedTime(workingHour.getStartTime(), workingHour.getEndTime(), finalTimezone, workingHour.getDayOfWeek())
             );
         });
         return workingHoursDTOS;
     }
 
     @Override
-    public List<CoreHourResponse> getCoreHours(Integer teamId) throws RuntimeException {
-        List<CoreHourResponse> coreHours = new ArrayList<>();
+    public List<WorkingHoursDTO> getCoreHours(Integer teamId, String timezone) throws RuntimeException {
+        List<WorkingHoursDTO> coreHours = new ArrayList<>();
 
         // Traverse over all days of the week
         for (DayOfWeek day : DayOfWeek.values()) {
@@ -155,12 +134,82 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
                 // Add core intervals for the day
                 for (TimeInterval interval : coreIntervals) {
-                    coreHours.add(new CoreHourResponse(day, interval));
+                    coreHours.add(
+                            WorkingHoursDTO
+                                    .builder()
+                                    .dayOfWeek(day)
+                                    .startTime(interval.getStart())
+                                    .endTime(interval.getEnd())
+                                    .build()
+                    );
                 }
             }
         }
 
-        return coreHours;
+
+        if(timezone == null){
+            return coreHours;
+        }
+        else{
+            List<WorkingHoursDTO> zonedWorkingHours = new ArrayList<>();
+            coreHours.forEach(coreHour ->{
+                zonedWorkingHours.add(
+                        TimeConverter.convertTimeToZonedTime(coreHour.getStartTime(), coreHour.getEndTime(), timezone, coreHour.getDayOfWeek())
+                );
+            });
+
+            return zonedWorkingHours;
+        }
+    }
+
+    @Override
+    public List<WorkingHoursDTO> getOverlapHours(Integer teamId, String timezone, List<Integer> teamMemberIds) {
+        List<WorkingHoursDTO> coreHours = new ArrayList<>();
+        // Traverse over all days of the week
+        for (DayOfWeek day : DayOfWeek.values()) {
+            // Retrieve working hours for the given team and day
+            List<WorkingHours> workingHourList = workingHoursRepository.getWorkingHoursByTeamIdAndDay(teamId, day.name());
+
+            // Process only if there are working hours
+            if (!workingHourList.isEmpty()) {
+                //Refine the list for the specified team members
+                List<WorkingHours> refinedWorkingHourList = new ArrayList<>();
+
+                for (WorkingHours workingHours : workingHourList) {
+                    if (teamMemberIds.contains(workingHours.getTeamMember().getTeamMemberId())) {
+                        refinedWorkingHourList.add(workingHours);
+                    }
+                }
+
+                List<TimeInterval> coreIntervals = findMaxOverlapIntervals(refinedWorkingHourList);
+
+                // Add core intervals for the day
+                for (TimeInterval interval : coreIntervals) {
+                    coreHours.add(
+                            WorkingHoursDTO
+                                    .builder()
+                                    .dayOfWeek(day)
+                                    .startTime(interval.getStart())
+                                    .endTime(interval.getEnd())
+                                    .build()
+                    );
+                }
+            }
+        }
+
+        if(timezone == null){
+            return coreHours;
+        }
+        else{
+            List<WorkingHoursDTO> zonedWorkingHours = new ArrayList<>();
+            coreHours.forEach(coreHour ->{
+                zonedWorkingHours.add(
+                        TimeConverter.convertTimeToZonedTime(coreHour.getStartTime(), coreHour.getEndTime(), timezone, coreHour.getDayOfWeek())
+                );
+            });
+
+            return zonedWorkingHours;
+        }
     }
 
     private List<TimeInterval> findMaxOverlapIntervals(List<WorkingHours> workingHours) {

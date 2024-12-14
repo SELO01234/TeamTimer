@@ -3,13 +3,13 @@ package com.example.application.team.controller;
 import com.example.application.team.dto.TeamMemberRegister;
 import com.example.application.team.dto.TeamMemberResponse;
 import com.example.application.team.model.Team;
-import com.example.application.team.model.TeamMember;
 import com.example.application.team.service.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/teams")
@@ -43,6 +43,12 @@ public class TeamController {
     public ResponseEntity<String> addTeamMember(@PathVariable("teamId") Integer teamId, @RequestBody TeamMemberRegister teamMemberRegister){
         teamService.addTeamMember(teamId, teamMemberRegister);
         return ResponseEntity.ok().body("User has added to the team");
+    }
+
+    @DeleteMapping("/{teamId}/members/{memberId}/delete")
+    public ResponseEntity<Objects> deleteTeamMember(@PathVariable("teamId") Integer teamId, @PathVariable("memberId") Integer memberId){
+        teamService.deleteTeamMember(teamId, memberId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{teamId}/members")

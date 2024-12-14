@@ -1,6 +1,5 @@
 package com.example.application.team.controller;
 
-import com.example.application.team.dto.CoreHourResponse;
 import com.example.application.team.dto.WorkingHoursDTO;
 import com.example.application.team.service.WorkingHoursService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +49,12 @@ public class WorkingHoursController {
     }
 
     @GetMapping("/{teamId}/core-hours")
-    ResponseEntity<List<CoreHourResponse>> getCoreHours(@PathVariable("teamId") Integer teamId){
-        return ResponseEntity.ok().body(workingHoursService.getCoreHours(teamId));
+    ResponseEntity<List<WorkingHoursDTO>> getCoreHours(@PathVariable("teamId") Integer teamId,  @RequestParam(required = false) String timezone){
+        return ResponseEntity.ok().body(workingHoursService.getCoreHours(teamId, timezone));
+    }
+
+    @PostMapping("/{teamId}/overlap-hours")
+    ResponseEntity<List<WorkingHoursDTO>> getOverlapHours(@PathVariable("teamId") Integer teamId,@RequestParam(required = false) String timezone,  @RequestBody List<Integer> teamMemberIds){
+        return ResponseEntity.ok().body(workingHoursService.getOverlapHours(teamId, timezone, teamMemberIds));
     }
 }

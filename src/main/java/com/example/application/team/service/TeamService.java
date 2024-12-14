@@ -19,4 +19,6 @@ public interface TeamService {
     List<TeamMemberResponse> getTeamMembers(Integer teamId);
 
     void assignTeamLeader(Integer teamId, Integer memberId);
+
+    void deleteTeamMember(Integer teamId, Integer memberId);
 }

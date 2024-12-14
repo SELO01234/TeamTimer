@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -29,4 +31,7 @@ public class TeamMember {
 
     @Enumerated(EnumType.STRING)
     private TeamRole roleInTeam;
+
+    @OneToMany(mappedBy = "teamMember", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WorkingHours> workingHours;
 }

@@ -121,6 +121,17 @@ public class TeamServiceImpl implements TeamService{
         teamMemberRepository.save(teamMember);
     }
 
+    @Transactional
+    @Override
+    public void deleteTeamMember(Integer teamId, Integer memberId) {
+        //check whether that team member exists
+        if(!teamMemberRepository.existsById(memberId)){
+            throw new RuntimeException("Team member is not present");
+        }
+        //delete team member
+        teamMemberRepository.deleteById(memberId);
+    }
+
     private TeamMemberResponse mapToTeamMemberResponse(Object[] result) {
         return TeamMemberResponse.builder()
                 .teamMemberId((Integer) result[0])
