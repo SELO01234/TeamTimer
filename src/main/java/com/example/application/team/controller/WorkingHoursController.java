@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -50,7 +51,7 @@ public class WorkingHoursController {
 
     @GetMapping("/{teamId}/core-hours")
     ResponseEntity<List<WorkingHoursDTO>> getCoreHours(@PathVariable("teamId") Integer teamId,  @RequestParam(required = false) String timezone){
-        return ResponseEntity.ok().body(workingHoursService.getCoreHours(teamId, timezone));
+        return ResponseEntity.ok().body(workingHoursService.getOverlapHours(teamId, timezone,new ArrayList<Integer>()));
     }
 
     @PostMapping("/{teamId}/overlap-hours")

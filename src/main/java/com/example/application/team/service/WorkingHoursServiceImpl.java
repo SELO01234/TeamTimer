@@ -58,15 +58,45 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
             System.out.println(utcStartTime);
             System.out.println(startDateZonedTime);
             //save to repository
-            workingHoursRepository.save(
-                    WorkingHours
-                            .builder()
-                            .dayOfWeek(request.getDayOfWeek())
-                            .startTime(utcStartTime)
-                            .endTime(utcEndTime)
-                            .teamMember(teamMember)
-                            .build()
-            );
+            //if start time is 22.00 and end time is 04.00 so its next day
+            if(utcStartTime.toLocalTime().isAfter(utcEndTime.toLocalTime())){
+                // 17.00 - 04.00  --> 17.00 - 23.59 + 00.00 - 04.00
+                LocalDateTime StartTime2 = LocalDateTime.of(startDateZonedTime.toLocalDate().plusDays(1), LocalTime.of(0,0));
+                LocalDateTime EndTime1 = LocalDateTime.of(startDateZonedTime.toLocalDate(), LocalTime.of(23,59));
+                //First interval
+                workingHoursRepository.save(
+                        WorkingHours
+                                .builder()
+                                .dayOfWeek(request.getDayOfWeek())
+                                .startTime(utcStartTime)
+                                .endTime(EndTime1)
+                                .teamMember(teamMember)
+                                .build()
+                );
+                //Second interval
+                workingHoursRepository.save(
+                        WorkingHours
+                                .builder()
+                                .dayOfWeek(request.getDayOfWeek().plus(1))
+                                .startTime(StartTime2)
+                                .endTime(utcEndTime.plusDays(1))
+                                .teamMember(teamMember)
+                                .build()
+                );
+            }
+            else
+            {
+                workingHoursRepository.save(
+                        WorkingHours
+                                .builder()
+                                .dayOfWeek(request.getDayOfWeek())
+                                .startTime(utcStartTime)
+                                .endTime(utcEndTime)
+                                .teamMember(teamMember)
+                                .build()
+                );
+            }
+
         });
     }
 
@@ -119,48 +149,7 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
         return workingHoursDTOS;
     }
 
-    @Override
-    public List<WorkingHoursDTO> getCoreHours(Integer teamId, String timezone) throws RuntimeException {
-        List<WorkingHoursDTO> coreHours = new ArrayList<>();
 
-        // Traverse over all days of the week
-        for (DayOfWeek day : DayOfWeek.values()) {
-            // Retrieve working hours for the given team and day
-            List<WorkingHours> workingHourList = workingHoursRepository.getWorkingHoursByTeamIdAndDay(teamId, day.name());
-
-            // Process only if there are working hours
-            if (!workingHourList.isEmpty()) {
-                List<TimeInterval> coreIntervals = findMaxOverlapIntervals(workingHourList);
-
-                // Add core intervals for the day
-                for (TimeInterval interval : coreIntervals) {
-                    coreHours.add(
-                            WorkingHoursDTO
-                                    .builder()
-                                    .dayOfWeek(day)
-                                    .startTime(interval.getStart())
-                                    .endTime(interval.getEnd())
-                                    .build()
-                    );
-                }
-            }
-        }
-
-
-        if(timezone == null){
-            return coreHours;
-        }
-        else{
-            List<WorkingHoursDTO> zonedWorkingHours = new ArrayList<>();
-            coreHours.forEach(coreHour ->{
-                zonedWorkingHours.add(
-                        TimeConverter.convertTimeToZonedTime(coreHour.getStartTime(), coreHour.getEndTime(), timezone, coreHour.getDayOfWeek())
-                );
-            });
-
-            return zonedWorkingHours;
-        }
-    }
 
     @Override
     public List<WorkingHoursDTO> getOverlapHours(Integer teamId, String timezone, List<Integer> teamMemberIds) {
@@ -175,10 +164,17 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
                 //Refine the list for the specified team members
                 List<WorkingHours> refinedWorkingHourList = new ArrayList<>();
 
-                for (WorkingHours workingHours : workingHourList) {
-                    if (teamMemberIds.contains(workingHours.getTeamMember().getTeamMemberId())) {
-                        refinedWorkingHourList.add(workingHours);
+                if(!teamMemberIds.isEmpty())
+                {
+                    for (WorkingHours workingHours : workingHourList) {
+                        if (teamMemberIds.contains(workingHours.getTeamMember().getTeamMemberId())) {
+                            refinedWorkingHourList.add(workingHours);
+                        }
                     }
+                }
+                else
+                {
+                    refinedWorkingHourList = workingHourList;
                 }
 
                 List<TimeInterval> coreIntervals = findMaxOverlapIntervals(refinedWorkingHourList);
@@ -223,7 +219,7 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
         // Sort events by time (start events come before end events if times are equal)
         events.sort(Comparator.comparing(CalcEvent::getTime).thenComparing(CalcEvent::getType));
-
+        System.out.println(events);
         int activeCount = 0, maxCount = 0;
         LocalDateTime currentStart = null;
         List<TimeInterval> coreIntervals = new ArrayList<>();

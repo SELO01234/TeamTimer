@@ -11,7 +11,6 @@ public interface WorkingHoursService {
 
     List<WorkingHoursDTO> getDailyWorkingHours(Integer teamId, Integer memberId);
     List<WorkingHoursDTO> getDailyWorkingHoursZoned(Integer teamId, Integer memberId, String timezone);
-    List<WorkingHoursDTO> getCoreHours(Integer teamId, String timezone);
 
     List<WorkingHoursDTO> getOverlapHours(Integer teamId, String timezone, List<Integer> teamMemberIds);
 }
