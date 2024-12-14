@@ -161,34 +161,47 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
             // Process only if there are working hours
             if (!workingHourList.isEmpty()) {
-                //Refine the list for the specified team members
-                List<WorkingHours> refinedWorkingHourList = new ArrayList<>();
 
-                if(!teamMemberIds.isEmpty())
-                {
-                    for (WorkingHours workingHours : workingHourList) {
-                        if (teamMemberIds.contains(workingHours.getTeamMember().getTeamMemberId())) {
-                            refinedWorkingHourList.add(workingHours);
-                        }
+                boolean hasMoreThanOneUser=false;
+                int memberId = 0;
+                // check whether that day has more than one user
+                for(WorkingHours workingHour : workingHourList){
+                    if(memberId == 0){
+                        memberId = workingHour.getTeamMember().getTeamMemberId();
+                    }
+                    else if(memberId != workingHour.getTeamMember().getTeamMemberId()){
+                        hasMoreThanOneUser=true;
+                        break;
                     }
                 }
-                else
-                {
-                    refinedWorkingHourList = workingHourList;
-                }
 
-                List<TimeInterval> coreIntervals = findMaxOverlapIntervals(refinedWorkingHourList);
+                if(hasMoreThanOneUser) {
+                    //Refine the list for the specified team members
+                    List<WorkingHours> refinedWorkingHourList = new ArrayList<>();
 
-                // Add core intervals for the day
-                for (TimeInterval interval : coreIntervals) {
-                    coreHours.add(
-                            WorkingHoursDTO
-                                    .builder()
-                                    .dayOfWeek(day)
-                                    .startTime(interval.getStart())
-                                    .endTime(interval.getEnd())
-                                    .build()
-                    );
+                    if (!teamMemberIds.isEmpty()) {
+                        for (WorkingHours workingHours : workingHourList) {
+                            if (teamMemberIds.contains(workingHours.getTeamMember().getTeamMemberId())) {
+                                refinedWorkingHourList.add(workingHours);
+                            }
+                        }
+                    } else {
+                        refinedWorkingHourList = workingHourList;
+                    }
+
+                    List<TimeInterval> coreIntervals = findMaxOverlapIntervals(refinedWorkingHourList);
+
+                    // Add core intervals for the day
+                    for (TimeInterval interval : coreIntervals) {
+                        coreHours.add(
+                                WorkingHoursDTO
+                                        .builder()
+                                        .dayOfWeek(day)
+                                        .startTime(interval.getStart())
+                                        .endTime(interval.getEnd())
+                                        .build()
+                        );
+                    }
                 }
             }
         }
