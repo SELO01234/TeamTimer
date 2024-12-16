@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -31,9 +31,9 @@ public class Event {
 
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime startTime;
+    @Column(nullable = false, columnDefinition = "TIMESTAMP")
+    private LocalDateTime startTime;
 
-    @Column(nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime endTime;
+    @Column(nullable = false, columnDefinition = "TIMESTAMP")
+    private LocalDateTime endTime;
 }

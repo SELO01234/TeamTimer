@@ -2,7 +2,6 @@ package com.example.application.team.controller;
 
 import com.example.application.team.dto.TimeOffRequestDTO;
 import com.example.application.team.dto.WorkingHoursDTO;
-import com.example.application.team.model.TimeOffRequest;
 import com.example.application.team.service.WorkingHoursService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -54,7 +53,7 @@ public class WorkingHoursController {
     @GetMapping("/{teamId}/core-hours")
     ResponseEntity<List<WorkingHoursDTO>> getCoreHours(@PathVariable("teamId") Integer teamId,
                                                        @RequestParam(required = false) String timezone){
-        return ResponseEntity.ok().body(workingHoursService.getOverlapHours(teamId, timezone,new ArrayList<Integer>()));
+        return ResponseEntity.ok().body(workingHoursService.getOverlapHours(teamId, timezone, new ArrayList<>()));
     }
 
     @PostMapping("/{teamId}/overlap-hours")
@@ -81,7 +80,7 @@ public class WorkingHoursController {
     }
 
     @GetMapping("/{teamId}/members/{memberId}/time-off")
-    ResponseEntity<List<TimeOffRequestDTO>> setTimeOffRequest(@PathVariable("teamId") Integer teamId,
+    ResponseEntity<List<TimeOffRequestDTO>> getTimeOffRequest(@PathVariable("teamId") Integer teamId,
                                              @PathVariable("memberId") Integer memberId){
 
         return ResponseEntity.ok().body(workingHoursService.getTimeOffRequest(teamId,memberId));
