@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 @Data
@@ -24,11 +25,11 @@ public class TimeOffRequest {
     @JoinColumn(name = "team_member_id", nullable = false)
     private TeamMember teamMember;
 
-    @Column(nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime startDate;
+    @Column(nullable = false, columnDefinition = "TIMESTAMP")
+    private LocalDateTime startDate;
 
-    @Column(nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime endDate;
+    @Column(nullable = false, columnDefinition = "TIMESTAMP")
+    private LocalDateTime endDate;
 
     private String reason;
 

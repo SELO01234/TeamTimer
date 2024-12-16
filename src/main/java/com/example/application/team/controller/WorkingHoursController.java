@@ -1,6 +1,8 @@
 package com.example.application.team.controller;
 
+import com.example.application.team.dto.TimeOffRequestDTO;
 import com.example.application.team.dto.WorkingHoursDTO;
+import com.example.application.team.model.TimeOffRequest;
 import com.example.application.team.service.WorkingHoursService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -50,12 +52,38 @@ public class WorkingHoursController {
     }
 
     @GetMapping("/{teamId}/core-hours")
-    ResponseEntity<List<WorkingHoursDTO>> getCoreHours(@PathVariable("teamId") Integer teamId,  @RequestParam(required = false) String timezone){
+    ResponseEntity<List<WorkingHoursDTO>> getCoreHours(@PathVariable("teamId") Integer teamId,
+                                                       @RequestParam(required = false) String timezone){
         return ResponseEntity.ok().body(workingHoursService.getOverlapHours(teamId, timezone,new ArrayList<Integer>()));
     }
 
     @PostMapping("/{teamId}/overlap-hours")
-    ResponseEntity<List<WorkingHoursDTO>> getOverlapHours(@PathVariable("teamId") Integer teamId,@RequestParam(required = false) String timezone,  @RequestBody List<Integer> teamMemberIds){
+    ResponseEntity<List<WorkingHoursDTO>> getOverlapHours(@PathVariable("teamId") Integer teamId,
+                                                          @RequestParam(required = false) String timezone,
+                                                          @RequestBody List<Integer> teamMemberIds){
         return ResponseEntity.ok().body(workingHoursService.getOverlapHours(teamId, timezone, teamMemberIds));
+    }
+
+    @GetMapping("/{teamId}/team-availability")
+    ResponseEntity<List<List<WorkingHoursDTO>>> getTeamAvailability(@PathVariable("teamId") Integer teamId,
+                                                                    @RequestParam(required = false) String timezone,
+                                                                    @RequestParam(required = false) Integer minMemberCount){
+        return ResponseEntity.ok().body(workingHoursService.getTeamAvailability(teamId, timezone,minMemberCount));
+    }
+
+    @PostMapping("/{teamId}/members/{memberId}/time-off")
+    ResponseEntity<String> setTimeOffRequest(@PathVariable("teamId") Integer teamId,
+                                             @PathVariable("memberId") Integer memberId,
+                                             @RequestBody List<TimeOffRequestDTO> workingHoursDTOS){
+
+        workingHoursService.setTimeOffRequest(teamId,memberId,workingHoursDTOS);
+        return ResponseEntity.ok("Time off request sent!");
+    }
+
+    @GetMapping("/{teamId}/members/{memberId}/time-off")
+    ResponseEntity<List<TimeOffRequestDTO>> setTimeOffRequest(@PathVariable("teamId") Integer teamId,
+                                             @PathVariable("memberId") Integer memberId){
+
+        return ResponseEntity.ok().body(workingHoursService.getTimeOffRequest(teamId,memberId));
     }
 }
