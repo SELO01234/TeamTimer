@@ -2,13 +2,18 @@ package com.example.application.team.service;
 
 import com.example.application.team.calculationmodels.CalcEvent;
 import com.example.application.team.calculationmodels.CalcEventType;
+import com.example.application.team.dto.TeamMemberResponse;
 import com.example.application.team.dto.TimeInterval;
+import com.example.application.team.dto.TimeOffRequestDTO;
 import com.example.application.team.dto.WorkingHoursDTO;
 import com.example.application.team.model.TeamMember;
+import com.example.application.team.model.TimeOffRequest;
 import com.example.application.team.model.WorkingHours;
 import com.example.application.team.repository.TeamMemberRepository;
+import com.example.application.team.repository.TimeOffRequestRepository;
 import com.example.application.team.repository.WorkingHoursRepository;
 import com.example.application.util.TimeConverter;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,12 +28,15 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
     private final WorkingHoursRepository workingHoursRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final TimeOffRequestRepository timeOffRequestRepository;
 
     @Autowired
     public WorkingHoursServiceImpl(WorkingHoursRepository workingHoursRepository,
-                                   TeamMemberRepository teamMemberRepository) {
+                                   TeamMemberRepository teamMemberRepository,
+                                   TimeOffRequestRepository timeOffRequestRepository) {
         this.workingHoursRepository = workingHoursRepository;
         this.teamMemberRepository = teamMemberRepository;
+        this.timeOffRequestRepository = timeOffRequestRepository;
     }
 
     @Transactional
@@ -221,6 +229,39 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
         }
     }
 
+    @Override
+    public List<List<WorkingHoursDTO>> getTeamAvailability(Integer teamId, String timezone,Integer minMemberCount) {
+        List<List<WorkingHoursDTO>> teamAvailability = new ArrayList<>();
+        // Traverse over all days of the week
+        for (DayOfWeek day : DayOfWeek.values()) {
+            // Retrieve working hours for the given team and day
+            int teammemberCount = teamMemberRepository.findAllByTeamId(teamId).size();
+            List<WorkingHours> workingHourList = workingHoursRepository.getWorkingHoursByTeamIdAndDay(teamId, day.name());
+            if(workingHourList.isEmpty())
+                continue;
+
+            if(minMemberCount == null) minMemberCount = 1;
+            else if(minMemberCount > teammemberCount) minMemberCount = teammemberCount;
+
+            if(timezone == null) timezone = "UTC";
+
+            List<TimeInterval> coreHours = findMaxOverlapIntervals(workingHourList,minMemberCount);
+
+            List<WorkingHoursDTO> workingHoursDTOS = new ArrayList<>();
+            for (TimeInterval interval : coreHours) {
+                workingHoursDTOS.add(TimeConverter.convertTimeToZonedTime(
+                        interval.getStart(),
+                        interval.getEnd(),
+                        timezone,
+                        day));
+            }
+            teamAvailability.add(workingHoursDTOS);
+        }
+
+        return teamAvailability;
+    }
+
+
     private List<TimeInterval> findMaxOverlapIntervals(List<WorkingHours> workingHours, Integer numberOfTeamMembers) {
         List<CalcEvent> events = new ArrayList<>();
 
@@ -289,6 +330,45 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
         if(!deleted)
             throw new RuntimeException("WorkingHours not found");
 
+    }
+
+    @Transactional
+    @Override
+    public void setTimeOffRequest(Integer teamId, Integer memberId, List<TimeOffRequestDTO> timeOffRequests) throws RuntimeException {
+
+        TeamMember member = teamMemberRepository.findById(memberId).orElseThrow(()-> new RuntimeException("Team member is not present"));
+
+        for (TimeOffRequestDTO timeOffRequest : timeOffRequests) {
+            timeOffRequestRepository.save(TimeOffRequest
+                                        .builder()
+                    .teamMember(member)
+                    .startDate(timeOffRequest.getStartDate())
+                    .endDate(timeOffRequest.getEndDate())
+                    .reason(timeOffRequest.getReason())
+                    .approved(timeOffRequest.isApproved())
+                    .build());
+        }
+    }
+
+    @Override
+    public List<TimeOffRequestDTO> getTimeOffRequest(Integer teamId, Integer memberId) throws RuntimeException {
+        TeamMember member = teamMemberRepository.findById(memberId).orElseThrow(()-> new RuntimeException("Team member is not present"));
+        List<TimeOffRequest> timeOffRequestList = timeOffRequestRepository.getAllByTeamMember(member);
+        List<TimeOffRequestDTO> timeOffRequestDTOS = new ArrayList<>();
+
+        for (TimeOffRequest timeOffRequest : timeOffRequestList) {
+            timeOffRequestDTOS.add(
+                    TimeOffRequestDTO
+                            .builder()
+                            .startDate(timeOffRequest.getStartDate())
+                            .endDate(timeOffRequest.getEndDate())
+                            .reason(timeOffRequest.getReason())
+                            .approved(timeOffRequest.isApproved())
+                            .build()
+                    
+            );
+        }
+        return timeOffRequestDTOS;
     }
 
 }

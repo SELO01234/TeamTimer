@@ -23,6 +23,10 @@ public final class TimeConverter {
         {
             dayOfWeek = DayOfWeek.of((dayOfWeek.getValue() + 1) % 7);
         }
+        if(startLocalDateTime.toLocalTime().isAfter(endLocalDateTime.toLocalTime()))
+        {
+            endLocalDateTime = endLocalDateTime.plusDays(1);
+        }
 
         return WorkingHoursDTO
                 .builder()
