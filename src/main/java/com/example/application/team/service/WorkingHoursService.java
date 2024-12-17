@@ -1,8 +1,8 @@
 package com.example.application.team.service;
 
+import com.example.application.team.dto.EventRegisterDTO;
 import com.example.application.team.dto.TimeOffRequestDTO;
 import com.example.application.team.dto.WorkingHoursDTO;
-import com.example.application.team.model.TimeOffRequest;
 
 import java.util.List;
 
@@ -19,4 +19,6 @@ public interface WorkingHoursService {
     List<List<WorkingHoursDTO>> getTeamAvailability(Integer teamId, String timezone,Integer minMemberCount);
 
     List<TimeOffRequestDTO> getTimeOffRequest(Integer teamId, Integer memberId);
+
+    String scheduleMeeting(EventRegisterDTO eventRegisterDTO, Integer teamId);
 }

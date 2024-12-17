@@ -2,18 +2,10 @@ package com.example.application.team.service;
 
 import com.example.application.team.calculationmodels.CalcEvent;
 import com.example.application.team.calculationmodels.CalcEventType;
-import com.example.application.team.dto.TeamMemberResponse;
-import com.example.application.team.dto.TimeInterval;
-import com.example.application.team.dto.TimeOffRequestDTO;
-import com.example.application.team.dto.WorkingHoursDTO;
-import com.example.application.team.model.TeamMember;
-import com.example.application.team.model.TimeOffRequest;
-import com.example.application.team.model.WorkingHours;
-import com.example.application.team.repository.TeamMemberRepository;
-import com.example.application.team.repository.TimeOffRequestRepository;
-import com.example.application.team.repository.WorkingHoursRepository;
+import com.example.application.team.dto.*;
+import com.example.application.team.model.*;
+import com.example.application.team.repository.*;
 import com.example.application.util.TimeConverter;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,6 +14,7 @@ import java.time.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class WorkingHoursServiceImpl implements WorkingHoursService{
@@ -29,14 +22,20 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
     private final WorkingHoursRepository workingHoursRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final TimeOffRequestRepository timeOffRequestRepository;
+    private final EventRepository eventRepository;
+    private final TeamRepository teamRepository;
 
     @Autowired
     public WorkingHoursServiceImpl(WorkingHoursRepository workingHoursRepository,
                                    TeamMemberRepository teamMemberRepository,
-                                   TimeOffRequestRepository timeOffRequestRepository) {
+                                   TimeOffRequestRepository timeOffRequestRepository,
+                                   EventRepository eventRepository,
+                                   TeamRepository teamRepository) {
         this.workingHoursRepository = workingHoursRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.timeOffRequestRepository = timeOffRequestRepository;
+        this.eventRepository = eventRepository;
+        this.teamRepository = teamRepository;
     }
 
     @Transactional
@@ -214,6 +213,10 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
             }
         }
 
+        //check timeoff request for a user
+
+        //check holidays
+
         if(timezone == null){
             return coreHours;
         }
@@ -369,6 +372,67 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
             );
         }
         return timeOffRequestDTOS;
+    }
+
+    @Override
+    public String scheduleMeeting(EventRegisterDTO eventRegisterDTO, Integer teamId) {
+        //find team member
+        TeamMember teamMember = teamMemberRepository
+                .findById(eventRegisterDTO.getCreatorId())
+                .orElseThrow(()-> new RuntimeException("User is not present"));
+
+        //find team
+        Team team = teamRepository.findById(teamId).orElseThrow(() -> new RuntimeException("Team is not present"));
+
+        //convert start and end time to utc-0
+        WorkingHoursDTO convertedTimeResponse = TimeConverter.convertZonedTimeToUtcTime(eventRegisterDTO.getStartTime(), eventRegisterDTO.getEndTime(), eventRegisterDTO.getTimezone(), eventRegisterDTO.getDayOfWeek());
+
+        //get overlapped hours for users
+        List<WorkingHoursDTO> overlappedHours = getOverlapHours(teamId,null,eventRegisterDTO.getTeamMemberIds());
+
+        if(overlappedHours.size() == 0 ){
+            return "These users do not have overlapped hours";
+        }
+
+        //filter overlapped hours to compare the focused day
+        List<WorkingHoursDTO> filteredOverlappedHours = overlappedHours.stream()
+                .filter(overlappedHour -> overlappedHour.getDayOfWeek() == eventRegisterDTO.getDayOfWeek())
+                .toList();
+
+        if(filteredOverlappedHours.size() == 0 ){
+            return "These users do not have overlapped hours on: " + eventRegisterDTO.getDayOfWeek().name();
+        }
+
+        //compare overlapped hours with event time
+        AtomicBoolean suitable= new AtomicBoolean(false);
+
+        filteredOverlappedHours.forEach((overlappedHour) -> {
+            if((overlappedHour.getStartTime().isBefore(convertedTimeResponse.getStartTime()) || overlappedHour.getStartTime().isEqual(convertedTimeResponse.getStartTime()))
+                    && (overlappedHour.getEndTime().isAfter(convertedTimeResponse.getEndTime()) || overlappedHour.getEndTime().isEqual(convertedTimeResponse.getEndTime()))
+            ){
+                suitable.set(true);
+            }
+        });
+
+        if(suitable.get()){
+            //save event
+            eventRepository.save(
+                    Event
+                            .builder()
+                            .createdBy(teamMember)
+                            .title(eventRegisterDTO.getTitle())
+                            .team(team)
+                            .dayOfWeek(eventRegisterDTO.getDayOfWeek())
+                            .startTime(convertedTimeResponse.getStartTime())
+                            .endTime(convertedTimeResponse.getEndTime())
+                            .build()
+            );
+
+            return "Event is successfully saved";
+        }
+        else{
+            return "Event is not suitable overlapped hours for " + eventRegisterDTO.getDayOfWeek().name() + " is: " + filteredOverlappedHours;
+        }
     }
 
 }
