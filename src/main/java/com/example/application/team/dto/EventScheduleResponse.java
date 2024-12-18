@@ -5,13 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.DayOfWeek;
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CoreHourResponse {
-    private DayOfWeek dayOfWeek;
-    private TimeInterval timeInterval;
+public class EventScheduleResponse {
+    private List<WorkingHoursDTO> workingHours;
+    private List<EventResponseDTO> events;
 }

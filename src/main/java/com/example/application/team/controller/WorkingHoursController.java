@@ -1,9 +1,6 @@
 package com.example.application.team.controller;
 
-import com.example.application.team.dto.EventRegisterDTO;
-import com.example.application.team.dto.EventResponseDTO;
-import com.example.application.team.dto.TimeOffRequestDTO;
-import com.example.application.team.dto.WorkingHoursDTO;
+import com.example.application.team.dto.*;
 import com.example.application.team.service.WorkingHoursService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -94,7 +91,13 @@ public class WorkingHoursController {
     }
 
     @GetMapping("/{teamId}/events")
-    ResponseEntity<EventResponseDTO> getTeamsEvents(@PathVariable("teamId") Integer teamId){
+    ResponseEntity<List<EventResponseDTO>> getTeamsEvents(@PathVariable("teamId") Integer teamId){
         return ResponseEntity.ok(workingHoursService.getTeamsEvents(teamId));
     }
+
+    @GetMapping("/{teamId}/members/{memberId}/schedule")
+    ResponseEntity<EventScheduleResponse> getTeamMemberSchedule(@PathVariable("teamId") Integer teamId, @RequestParam(required = false) String timezone, @PathVariable("memberId") Integer memberId){
+        return ResponseEntity.ok().body(workingHoursService.getTeamMemberSchedule(teamId, timezone, memberId));
+    }
+
 }

@@ -471,19 +471,83 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
     }
 
     @Override
-    public EventResponseDTO getTeamsEvents(Integer teamId) {
+    public List<EventResponseDTO> getTeamsEvents(Integer teamId) {
         //find the team
         Team team = teamRepository.findById(teamId).orElseThrow(() -> new RuntimeException("Team is not present"));
-        Event event = eventRepository.findByTeam(team).orElseThrow(()-> new RuntimeException("Cannot get teams events"));
-        return EventResponseDTO
+        List<Event> events = eventRepository.findByTeam(team).orElseThrow(()-> new RuntimeException("Cannot get teams events"));
+
+        List<EventResponseDTO> eventResponseDTOS = events.stream().map((event) -> {
+            return EventResponseDTO
+                    .builder()
+                    .eventId(event.getEventId())
+                    .title(event.getTitle())
+                    .creatorId(event.getCreatedBy().getTeamMemberId())
+                    .creatorName(event.getCreatedBy().getUser().getUsername())
+                    .dayOfWeek(event.getDayOfWeek())
+                    .startTime(event.getStartTime())
+                    .endTime(event.getEndTime())
+                    .build();
+        }).toList();
+
+        return eventResponseDTOS;
+    }
+
+    @Override
+    public EventScheduleResponse getTeamMemberSchedule(Integer teamId, String timezone, Integer memberId) {
+        TeamMember teamMember = teamMemberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Team member is not present"));
+        List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember).orElseThrow(()-> new RuntimeException("Cannot retrieve hours"));
+        List<Event> events = eventRepository.findByCreatedBy(teamMember).orElseThrow(()-> new RuntimeException("Cannot retrieve hours"));
+
+        List<WorkingHoursDTO> workingHoursDTOS = workingHours.stream().map((workingHour) -> {
+            if(timezone != null){
+                return TimeConverter.convertTimeToZonedTime(workingHour.getStartTime(), workingHour.getEndTime(), timezone, workingHour.getDayOfWeek());
+            }
+            else{
+                return WorkingHoursDTO
+                        .builder()
+                        .startTime(workingHour.getStartTime())
+                        .endTime(workingHour.getEndTime())
+                        .dayOfWeek(workingHour.getDayOfWeek())
+                        .build();
+            }
+        }).toList();
+
+        List<EventResponseDTO> eventResponseDTOS = null;
+
+        if(timezone != null){
+            eventResponseDTOS = events.stream().map((event) -> {
+                WorkingHoursDTO workingHoursDTO = TimeConverter.convertTimeToZonedTime(event.getStartTime(), event.getEndTime(), timezone, event.getDayOfWeek());
+                return EventResponseDTO
+                        .builder()
+                        .eventId(event.getEventId())
+                        .title(event.getTitle())
+                        .creatorId(event.getCreatedBy().getTeamMemberId())
+                        .creatorName(event.getCreatedBy().getUser().getUsername())
+                        .dayOfWeek(workingHoursDTO.getDayOfWeek())
+                        .startTime(workingHoursDTO.getStartTime())
+                        .endTime(workingHoursDTO.getEndTime())
+                        .build();
+            }).toList();
+        }
+        else{
+            eventResponseDTOS = events.stream().map((event) -> {
+                return EventResponseDTO
+                        .builder()
+                        .eventId(event.getEventId())
+                        .title(event.getTitle())
+                        .creatorId(event.getCreatedBy().getTeamMemberId())
+                        .creatorName(event.getCreatedBy().getUser().getUsername())
+                        .dayOfWeek(event.getDayOfWeek())
+                        .startTime(event.getStartTime())
+                        .endTime(event.getEndTime())
+                        .build();
+            }).toList();
+        }
+
+        return EventScheduleResponse
                 .builder()
-                .eventId(event.getEventId())
-                .title(event.getTitle())
-                .creatorId(event.getCreatedBy().getTeamMemberId())
-                .creatorName(event.getCreatedBy().getUser().getUsername())
-                .dayOfWeek(event.getDayOfWeek())
-                .startTime(event.getStartTime())
-                .endTime(event.getEndTime())
+                .workingHours(workingHoursDTOS)
+                .events(eventResponseDTOS)
                 .build();
     }
 
