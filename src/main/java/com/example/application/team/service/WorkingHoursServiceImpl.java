@@ -1,5 +1,7 @@
 package com.example.application.team.service;
 
+import com.example.application.holiday.model.Holiday;
+import com.example.application.holiday.repository.HolidayRepository;
 import com.example.application.team.calculationmodels.CalcEvent;
 import com.example.application.team.calculationmodels.CalcEventType;
 import com.example.application.team.dto.*;
@@ -24,18 +26,21 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
     private final TimeOffRequestRepository timeOffRequestRepository;
     private final EventRepository eventRepository;
     private final TeamRepository teamRepository;
+    private final HolidayRepository holidayRepository;
 
     @Autowired
     public WorkingHoursServiceImpl(WorkingHoursRepository workingHoursRepository,
                                    TeamMemberRepository teamMemberRepository,
                                    TimeOffRequestRepository timeOffRequestRepository,
                                    EventRepository eventRepository,
-                                   TeamRepository teamRepository) {
+                                   TeamRepository teamRepository,
+                                   HolidayRepository holidayRepository) {
         this.workingHoursRepository = workingHoursRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.timeOffRequestRepository = timeOffRequestRepository;
         this.eventRepository = eventRepository;
         this.teamRepository = teamRepository;
+        this.holidayRepository = holidayRepository;
     }
 
     @Transactional
@@ -213,9 +218,39 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
             }
         }
 
-        //check timeoff request for a user
-
         //check holidays
+        List<Holiday> holidays = holidayRepository.findAll();
+
+        List<WorkingHoursDTO> convertedHolidays = holidays.stream().map((holiday) -> {
+            LocalDateTime holidayStartTime = holiday.getDate().atStartOfDay();
+            LocalDateTime holidayEndTime = holiday.getDate().atTime(LocalTime.of(23, 59, 0));
+            return TimeConverter.convertZonedTimeToUtcTime(holidayStartTime, holidayEndTime, holiday.getTimezone(), DayOfWeek.MONDAY);
+        }).toList();
+
+        coreHours = coreHours.stream().filter((coreHour) -> {
+            for (WorkingHoursDTO holiday : convertedHolidays) {
+                // If coreHour overlaps with holiday, exclude it
+                if ((holiday.getStartTime().isBefore(coreHour.getEndTime()) || holiday.getStartTime().isEqual(coreHour.getEndTime()))
+                        && (holiday.getEndTime().isAfter(coreHour.getStartTime()) || holiday.getEndTime().isEqual(coreHour.getStartTime()))) {
+                    return false; // Exclude this coreHour
+                }
+            }
+            return true; // Keep this coreHour
+        }).toList(); // Convert the stream back to a list (Java 16+). Use `collect(Collectors.toList())` for earlier versions.
+
+        //check timeoff request for users
+        List<TimeOffRequest> timeOffRequestList = timeOffRequestRepository.findAllByApproved(true);
+
+        coreHours = coreHours.stream().filter((coreHour) -> {
+            for (TimeOffRequest timeOffRequest : timeOffRequestList) {
+                // If coreHour overlaps with holiday, exclude it
+                if ((timeOffRequest.getStartDate().isBefore(coreHour.getEndTime()) || timeOffRequest.getStartDate().isEqual(coreHour.getEndTime()))
+                        && (timeOffRequest.getEndDate().isAfter(coreHour.getStartTime()) || timeOffRequest.getEndDate().isEqual(coreHour.getStartTime()))) {
+                    return false; // Exclude this coreHour
+                }
+            }
+            return true; // Keep this coreHour
+        }).toList(); // Convert the stream back to a list (Java 16+). Use `collect(Collectors.toList())` for earlier versions.
 
         if(timezone == null){
             return coreHours;
@@ -433,6 +468,23 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
         else{
             return "Event is not suitable overlapped hours for " + eventRegisterDTO.getDayOfWeek().name() + " is: " + filteredOverlappedHours;
         }
+    }
+
+    @Override
+    public EventResponseDTO getTeamsEvents(Integer teamId) {
+        //find the team
+        Team team = teamRepository.findById(teamId).orElseThrow(() -> new RuntimeException("Team is not present"));
+        Event event = eventRepository.findByTeam(team).orElseThrow(()-> new RuntimeException("Cannot get teams events"));
+        return EventResponseDTO
+                .builder()
+                .eventId(event.getEventId())
+                .title(event.getTitle())
+                .creatorId(event.getCreatedBy().getTeamMemberId())
+                .creatorName(event.getCreatedBy().getUser().getUsername())
+                .dayOfWeek(event.getDayOfWeek())
+                .startTime(event.getStartTime())
+                .endTime(event.getEndTime())
+                .build();
     }
 
 }

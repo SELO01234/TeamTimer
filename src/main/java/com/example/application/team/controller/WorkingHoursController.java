@@ -1,6 +1,7 @@
 package com.example.application.team.controller;
 
 import com.example.application.team.dto.EventRegisterDTO;
+import com.example.application.team.dto.EventResponseDTO;
 import com.example.application.team.dto.TimeOffRequestDTO;
 import com.example.application.team.dto.WorkingHoursDTO;
 import com.example.application.team.service.WorkingHoursService;
@@ -90,5 +91,10 @@ public class WorkingHoursController {
     @PostMapping("/{teamId}/events-add")
     ResponseEntity<String> scheduleMeeting(@PathVariable("teamId") Integer teamId, @RequestBody EventRegisterDTO eventRegisterDTO){
         return ResponseEntity.ok(workingHoursService.scheduleMeeting(eventRegisterDTO, teamId));
+    }
+
+    @GetMapping("/{teamId}/events")
+    ResponseEntity<EventResponseDTO> getTeamsEvents(@PathVariable("teamId") Integer teamId){
+        return ResponseEntity.ok(workingHoursService.getTeamsEvents(teamId));
     }
 }

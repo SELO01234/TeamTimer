@@ -53,7 +53,7 @@ public final class TimeConverter {
         {
             dayOfWeek = DayOfWeek.of((dayOfWeek.getValue() + 1) % 7);
         }
-        if(startLocalDateTime.toLocalTime().isAfter(endLocalDateTime.toLocalTime()))
+        if(startLocalDateTime.isAfter(endLocalDateTime))
         {
             endLocalDateTime = endLocalDateTime.plusDays(1);
         }
