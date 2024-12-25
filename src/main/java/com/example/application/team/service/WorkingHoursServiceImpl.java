@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.lang.reflect.Member;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -512,7 +511,8 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
     public EventScheduleResponse getTeamMemberSchedule(Integer teamId, String timezone, Integer memberId) {
         TeamMember teamMember = teamMemberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Team member is not present"));
         List<WorkingHours> workingHours = workingHoursRepository.getWorkingHoursByTeamMember(teamMember).orElseThrow(()-> new RuntimeException("Cannot retrieve hours"));
-        List<Event> events = eventRepository.findByCreatedBy(teamMember).orElseThrow(()-> new RuntimeException("Cannot retrieve hours"));
+        Team team = teamRepository.findById(teamId).orElseThrow(()-> new RuntimeException("Cannot retrieve team"));
+        List<Event> events = eventRepository.findByTeam(team).orElseThrow(()-> new RuntimeException("Cannot retrieve hours"));
 
         List<WorkingHoursDTO> workingHoursDTOS = workingHours.stream().map((workingHour) -> {
             if(timezone != null){
@@ -527,6 +527,22 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
                         .build();
             }
         }).toList();
+
+        if(events != null){
+            events = events.stream().filter((event -> {
+                boolean suitable=false;
+                for (WorkingHoursDTO workingHour: workingHoursDTOS) {
+                    if(
+                            (workingHour.getStartTime().isEqual(event.getStartTime()) || workingHour.getStartTime().isBefore(event.getStartTime()))
+                            &&
+                            (workingHour.getEndTime().isEqual(event.getEndTime()) || workingHour.getEndTime().isAfter(event.getEndTime()))
+                    ){
+                        suitable=true;
+                    }
+                }
+                return suitable;
+            })).toList();
+        }
 
         List<EventResponseDTO> eventResponseDTOS = null;
 
@@ -568,7 +584,7 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
     }
 
     @Override
-    public void getScheduleAsExcel(Integer teamId, Integer memberId, String timezone) throws RuntimeException, IOException, IllegalAccessException {
+    public void getScheduleAsExcel(Integer teamId, Integer memberId, String path, String timezone) throws RuntimeException, IOException, IllegalAccessException {
 
         TeamMember member = teamMemberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Member is not present"));
 
@@ -576,7 +592,7 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
         if(schedule == null){
             throw new RuntimeException("Schedule is not present");
         }
-        String fileName = member.getUser().getUsername() + "_Schedule.xlsx";
+        String fileName = path + "/" + member.getUser().getUsername() + "_Schedule.xlsx";
 
         EventScheduleExcelWriter.writeToExcel(schedule,fileName);
     }

@@ -109,9 +109,10 @@ public class WorkingHoursController {
 
     @GetMapping("/{teamId}/members/{memberId}/schedule-excel")
     ResponseEntity<String> getScheduleAsExcel(@PathVariable("teamId") Integer teamId,
-                                            @PathVariable("memberId") Integer memberId,
+                                              @PathVariable("memberId") Integer memberId,
+                                              @RequestParam(required = false) String path,
                                               @RequestParam(required = false) String timezone) throws IOException, IllegalAccessException {
-        workingHoursService.getScheduleAsExcel(teamId,memberId,timezone);
+        workingHoursService.getScheduleAsExcel(teamId,memberId,path,timezone);
         return ResponseEntity.ok().body("Excel exported!");
     }
 
