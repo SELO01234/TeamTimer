@@ -31,17 +31,45 @@ public final class EventScheduleExcelWriter {
 
         // Fill working hours
         List<WorkingHoursDTO> workingHours = response.getWorkingHours();
-        int rowIndex = 1;
-        for (WorkingHoursDTO workingHour : workingHours) {
-            Row row = sheet.createRow(rowIndex++);
-            row.createCell(workingHour.getDayOfWeek().getValue() - 1)
-                    .setCellValue(workingHour.getStartTime().format(timeFormatter) + " - " +
-                            workingHour.getEndTime().format(timeFormatter));
+
+        Row[] rows = new Row[7];
+        for(int i = 1; i < 8; i++)
+        {
+            rows[i-1] = sheet.createRow(i);
         }
+        for(int i = 1; i < 8; i++)
+        {
+            int rowIndex = 0;
+            for(WorkingHoursDTO workingHoursDTO : workingHours)
+            {
+                if(workingHoursDTO.getDayOfWeek().getValue() == i)
+                {
+                    System.out.println(workingHoursDTO.getDayOfWeek() + "-" + workingHoursDTO.getDayOfWeek().getValue());
+                    System.out.println("Row: " + (rowIndex) + "  Column: " + (i-1));
+                    rows[rowIndex++].createCell(i-1)
+                            .setCellValue(workingHoursDTO.getStartTime().format(timeFormatter) + " - " +
+                                    workingHoursDTO.getEndTime().format(timeFormatter));
+                }
+            }
+            //rowIndex = 1;
+        }
+//        Row row = sheet.createRow(1);
+//        row.createCell(0).setCellValue(0);
+//        row.createCell(1).setCellValue(1);
+//
+//        row = sheet.createRow(2);
+//        row.createCell(0).setCellValue("a");
+//        row.createCell(1).setCellValue("b");
+//        for (WorkingHoursDTO workingHour : workingHours) {
+//            Row row = sheet.createRow(rowIndex++);
+//            row.createCell(workingHour.getDayOfWeek().getValue() - 1)
+//                    .setCellValue(workingHour.getStartTime().format(timeFormatter) + " - " +
+//                            workingHour.getEndTime().format(timeFormatter));
+//        }
 
         // Fill events
         List<EventResponseDTO> events = response.getEvents();
-        rowIndex = 1; // Reset row index for events
+        int rowIndex = 1; // Reset row index for events
         for (EventResponseDTO event : events) {
             Row row = sheet.getRow(rowIndex);
             if (row == null) {
@@ -51,7 +79,7 @@ public final class EventScheduleExcelWriter {
                     "ID: " + event.getEventId() +
                             ", Title: " + event.getTitle() +
                             ", Creator: " + event.getCreatorName() +
-                            ", Time: " + event.getStartTime().format(timeFormatter) + " - " +
+                            ", Time: " + event.getStartTime() + " - " +
                             event.getEndTime().format(timeFormatter)
             );
             rowIndex++;
