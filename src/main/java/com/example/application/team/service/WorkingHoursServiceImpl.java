@@ -7,11 +7,14 @@ import com.example.application.team.calculationmodels.CalcEventType;
 import com.example.application.team.dto.*;
 import com.example.application.team.model.*;
 import com.example.application.team.repository.*;
+import com.example.application.util.EventScheduleExcelWriter;
 import com.example.application.util.TimeConverter;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.lang.reflect.Member;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -376,7 +379,11 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
 
         TeamMember member = teamMemberRepository.findById(memberId).orElseThrow(()-> new RuntimeException("Team member is not present"));
 
-        for (TimeOffRequestDTO timeOffRequest : timeOffRequests) {
+        List<TimeOffRequestDTO> zonedRequests = new ArrayList<>();
+        for (TimeOffRequestDTO timeOffRequest : timeOffRequests){
+            zonedRequests.add(TimeConverter.convertZonedTimeToUtcTimeTimeOffRequest(timeOffRequest,member.getUser().getTimezone()));
+        }
+        for (TimeOffRequestDTO timeOffRequest : zonedRequests) {
             timeOffRequestRepository.save(TimeOffRequest
                                         .builder()
                     .teamMember(member)
@@ -389,8 +396,11 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
     }
 
     @Override
-    public List<TimeOffRequestDTO> getTimeOffRequest(Integer teamId, Integer memberId) throws RuntimeException {
+    public List<TimeOffRequestDTO> getTimeOffRequest(Integer teamId, Integer memberId,String timezone) throws RuntimeException {
         TeamMember member = teamMemberRepository.findById(memberId).orElseThrow(()-> new RuntimeException("Team member is not present"));
+        if(timezone == null)
+            timezone = "UTC";
+
         List<TimeOffRequest> timeOffRequestList = timeOffRequestRepository.getAllByTeamMember(member);
         List<TimeOffRequestDTO> timeOffRequestDTOS = new ArrayList<>();
 
@@ -406,7 +416,13 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
                     
             );
         }
-        return timeOffRequestDTOS;
+
+        List<TimeOffRequestDTO> zonedRequests = new ArrayList<>();
+        for (TimeOffRequestDTO timeOffRequest : timeOffRequestDTOS){
+            zonedRequests.add(TimeConverter.convertTimeToZonedTimeTimeOffRequest(timeOffRequest,timezone));
+        }
+
+        return zonedRequests;
     }
 
     @Override
@@ -549,6 +565,20 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
                 .workingHours(workingHoursDTOS)
                 .events(eventResponseDTOS)
                 .build();
+    }
+
+    @Override
+    public void getScheduleAsExcel(Integer teamId, Integer memberId, String timezone) throws RuntimeException, IOException, IllegalAccessException {
+
+        TeamMember member = teamMemberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Member is not present"));
+
+        EventScheduleResponse schedule = getTeamMemberSchedule(teamId,timezone,memberId);
+        if(schedule == null){
+            throw new RuntimeException("Schedule is not present");
+        }
+        String fileName = member.getUser().getUsername() + "_Schedule.xlsx";
+
+        EventScheduleExcelWriter.writeToExcel(schedule,fileName);
     }
 
 }

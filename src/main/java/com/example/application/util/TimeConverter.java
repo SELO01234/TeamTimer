@@ -1,5 +1,6 @@
 package com.example.application.util;
 
+import com.example.application.team.dto.TimeOffRequestDTO;
 import com.example.application.team.dto.WorkingHoursDTO;
 
 import java.time.*;
@@ -63,6 +64,45 @@ public final class TimeConverter {
                 .dayOfWeek(dayOfWeek)
                 .startTime(startLocalDateTime)
                 .endTime(endLocalDateTime)
+                .build();
+    }
+
+    public static TimeOffRequestDTO convertZonedTimeToUtcTimeTimeOffRequest(TimeOffRequestDTO timeOffRequestDTO, String timezone){
+
+        ZoneId zoneId = ZoneId.of(timezone);
+
+        ZonedDateTime startDateZonedTime = ZonedDateTime.of(timeOffRequestDTO.getStartDate(), zoneId);
+        ZonedDateTime endDateZonedTime = ZonedDateTime.of(timeOffRequestDTO.getEndDate(), zoneId);
+
+        LocalDateTime startLocalDateTime = startDateZonedTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        LocalDateTime endLocalDateTime = endDateZonedTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+
+        return TimeOffRequestDTO
+                .builder()
+                .startDate(startLocalDateTime)
+                .endDate(endLocalDateTime)
+                .reason(timeOffRequestDTO.getReason())
+                .approved(timeOffRequestDTO.isApproved())
+                .build();
+    }
+
+
+    public static TimeOffRequestDTO convertTimeToZonedTimeTimeOffRequest(TimeOffRequestDTO timeOffRequestDTO, String timezone){
+
+        ZoneId zoneId = ZoneId.of(timezone);
+
+        ZonedDateTime startDateZonedTime = ZonedDateTime.of(timeOffRequestDTO.getStartDate(), ZoneOffset.UTC);
+        ZonedDateTime endDateZonedTime = ZonedDateTime.of(timeOffRequestDTO.getEndDate(),ZoneOffset.UTC);
+
+        LocalDateTime startLocalDateTime = startDateZonedTime.withZoneSameInstant(zoneId).toLocalDateTime();
+        LocalDateTime endLocalDateTime = endDateZonedTime.withZoneSameInstant(zoneId).toLocalDateTime();
+
+        return TimeOffRequestDTO
+                .builder()
+                .startDate(startLocalDateTime)
+                .endDate(endLocalDateTime)
+                .reason(timeOffRequestDTO.getReason())
+                .approved(timeOffRequestDTO.isApproved())
                 .build();
     }
 }

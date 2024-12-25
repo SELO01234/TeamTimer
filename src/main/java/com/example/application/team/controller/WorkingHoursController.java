@@ -5,7 +5,9 @@ import com.example.application.team.service.WorkingHoursService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.HandlerMapping;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,10 +16,12 @@ import java.util.List;
 public class WorkingHoursController {
 
     private final WorkingHoursService workingHoursService;
+    private final HandlerMapping resourceHandlerMapping;
 
     @Autowired
-    public WorkingHoursController(WorkingHoursService workingHoursService){
+    public WorkingHoursController(WorkingHoursService workingHoursService, HandlerMapping resourceHandlerMapping){
         this.workingHoursService = workingHoursService;
+        this.resourceHandlerMapping = resourceHandlerMapping;
     }
 
     @PutMapping("/{teamId}/members/{memberId}/working-hours")
@@ -80,9 +84,10 @@ public class WorkingHoursController {
 
     @GetMapping("/{teamId}/members/{memberId}/time-off")
     ResponseEntity<List<TimeOffRequestDTO>> getTimeOffRequest(@PathVariable("teamId") Integer teamId,
-                                             @PathVariable("memberId") Integer memberId){
+                                                              @PathVariable("memberId") Integer memberId,
+                                                              @RequestParam(required = false) String timezone){
 
-        return ResponseEntity.ok().body(workingHoursService.getTimeOffRequest(teamId,memberId));
+        return ResponseEntity.ok().body(workingHoursService.getTimeOffRequest(teamId,memberId,timezone));
     }
 
     @PostMapping("/{teamId}/events-add")
@@ -96,8 +101,18 @@ public class WorkingHoursController {
     }
 
     @GetMapping("/{teamId}/members/{memberId}/schedule")
-    ResponseEntity<EventScheduleResponse> getTeamMemberSchedule(@PathVariable("teamId") Integer teamId, @RequestParam(required = false) String timezone, @PathVariable("memberId") Integer memberId){
+    ResponseEntity<EventScheduleResponse> getTeamMemberSchedule(@PathVariable("teamId") Integer teamId,
+                                                                @RequestParam(required = false) String timezone,
+                                                                @PathVariable("memberId") Integer memberId){
         return ResponseEntity.ok().body(workingHoursService.getTeamMemberSchedule(teamId, timezone, memberId));
+    }
+
+    @GetMapping("/{teamId}/members/{memberId}/schedule-excel")
+    ResponseEntity<String> getScheduleAsExcel(@PathVariable("teamId") Integer teamId,
+                                            @PathVariable("memberId") Integer memberId,
+                                              @RequestParam(required = false) String timezone) throws IOException, IllegalAccessException {
+        workingHoursService.getScheduleAsExcel(teamId,memberId,timezone);
+        return ResponseEntity.ok().body("Excel exported!");
     }
 
 }
