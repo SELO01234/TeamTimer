@@ -53,19 +53,6 @@ public final class EventScheduleExcelWriter {
             }
             //rowIndex = 1;
         }
-//        Row row = sheet.createRow(1);
-//        row.createCell(0).setCellValue(0);
-//        row.createCell(1).setCellValue(1);
-//
-//        row = sheet.createRow(2);
-//        row.createCell(0).setCellValue("a");
-//        row.createCell(1).setCellValue("b");
-//        for (WorkingHoursDTO workingHour : workingHours) {
-//            Row row = sheet.createRow(rowIndex++);
-//            row.createCell(workingHour.getDayOfWeek().getValue() - 1)
-//                    .setCellValue(workingHour.getStartTime().format(timeFormatter) + " - " +
-//                            workingHour.getEndTime().format(timeFormatter));
-//        }
 
         // Fill events
         List<EventResponseDTO> events = response.getEvents();
