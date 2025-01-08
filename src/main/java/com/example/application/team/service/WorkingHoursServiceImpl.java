@@ -584,7 +584,9 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
     }
 
     @Override
-    public void getScheduleAsExcel(Integer teamId, Integer memberId, String path, String timezone) throws RuntimeException, IOException, IllegalAccessException {
+    public void getScheduleAsExcel(Integer teamId, Integer memberId, String timezone) throws RuntimeException, IOException, IllegalAccessException {
+
+        String path="/excels";
 
         TeamMember member = teamMemberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Member is not present"));
 

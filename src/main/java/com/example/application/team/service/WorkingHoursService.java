@@ -25,5 +25,5 @@ public interface WorkingHoursService {
 
     EventScheduleResponse getTeamMemberSchedule(Integer teamId, String timezone, Integer memberId);
 
-    void getScheduleAsExcel(Integer teamId, Integer memberId, String path, String timezone) throws IOException, IllegalAccessException;
+    void getScheduleAsExcel(Integer teamId, Integer memberId, String timezone) throws IOException, IllegalAccessException;
 }
