@@ -1,0 +1,22 @@
+services:
+  db:
+    ports:
+      - 5432:5432
+    container_name: postgresql_container
+    image: postgres
+    environment:
+      - POSTGRES_DB=team_timer
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+    restart: always
+  backend:
+    build:
+      dockerfile: Dockerfile
+    container_name: team_timer_container
+    ports:
+      - 8080:8080
+    volumes:
+      - C:/Users/SELO/OneDrive/excels:/excels
+    depends_on:
+      - db
+    restart: always
