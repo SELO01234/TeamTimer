@@ -5,7 +5,6 @@ import com.example.application.team.service.WorkingHoursService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.HandlerMapping;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,12 +15,10 @@ import java.util.List;
 public class WorkingHoursController {
 
     private final WorkingHoursService workingHoursService;
-    private final HandlerMapping resourceHandlerMapping;
 
     @Autowired
-    public WorkingHoursController(WorkingHoursService workingHoursService, HandlerMapping resourceHandlerMapping){
+    public WorkingHoursController(WorkingHoursService workingHoursService){
         this.workingHoursService = workingHoursService;
-        this.resourceHandlerMapping = resourceHandlerMapping;
     }
 
     @PutMapping("/{teamId}/members/{memberId}/working-hours")
@@ -110,7 +107,7 @@ public class WorkingHoursController {
     @GetMapping("/{teamId}/members/{memberId}/schedule-excel")
     ResponseEntity<String> getScheduleAsExcel(@PathVariable("teamId") Integer teamId,
                                               @PathVariable("memberId") Integer memberId,
-                                              @RequestParam(required = false) String timezone) throws IOException, IllegalAccessException {
+                                              @RequestParam(required = false, defaultValue = "Etc/UTC") String timezone) throws IOException, IllegalAccessException {
         workingHoursService.getScheduleAsExcel(teamId,memberId,timezone);
         return ResponseEntity.ok().body("Excel exported!");
     }

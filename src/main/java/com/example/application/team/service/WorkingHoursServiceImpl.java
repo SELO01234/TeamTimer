@@ -515,17 +515,12 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
         List<Event> events = eventRepository.findByTeam(team).orElseThrow(()-> new RuntimeException("Cannot retrieve hours"));
 
         List<WorkingHoursDTO> workingHoursDTOS = workingHours.stream().map((workingHour) -> {
-            if(timezone != null){
-                return TimeConverter.convertTimeToZonedTime(workingHour.getStartTime(), workingHour.getEndTime(), timezone, workingHour.getDayOfWeek());
-            }
-            else{
-                return WorkingHoursDTO
-                        .builder()
-                        .startTime(workingHour.getStartTime())
-                        .endTime(workingHour.getEndTime())
-                        .dayOfWeek(workingHour.getDayOfWeek())
-                        .build();
-            }
+            return WorkingHoursDTO
+                    .builder()
+                    .startTime(workingHour.getStartTime())
+                    .endTime(workingHour.getEndTime())
+                    .dayOfWeek(workingHour.getDayOfWeek())
+                    .build();
         }).toList();
 
         if(events != null){
@@ -576,15 +571,19 @@ public class WorkingHoursServiceImpl implements WorkingHoursService{
             }).toList();
         }
 
+        List<WorkingHoursDTO> convertedWorkingHours = workingHoursDTOS.stream().map((workingHoursDTO) -> {
+            return TimeConverter.convertTimeToZonedTime(workingHoursDTO.getStartTime(), workingHoursDTO.getEndTime(), timezone, workingHoursDTO.getDayOfWeek());
+        }).toList();
+
         return EventScheduleResponse
                 .builder()
-                .workingHours(workingHoursDTOS)
+                .workingHours(convertedWorkingHours)
                 .events(eventResponseDTOS)
                 .build();
     }
 
     @Override
-    public void getScheduleAsExcel(Integer teamId, Integer memberId, String timezone) throws RuntimeException, IOException, IllegalAccessException {
+    public void getScheduleAsExcel(Integer teamId, Integer memberId, String timezone) throws RuntimeException, IOException {
 
         String path="/excels";
 
