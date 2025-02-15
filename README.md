@@ -1,0 +1,1 @@
+TeamTimer is a softwware that helps schedules for teams that has team members from arround the globe. It can calculate overlapped hours for teammates for meetings, events by counting on holidays and time offs
